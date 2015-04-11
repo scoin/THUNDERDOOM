@@ -67,10 +67,10 @@ Player.prototype.setDirection = function(){
 
 Player.prototype.move = function(keysDown){
 	var player = this;
-	if("up" in keysDown) player.y = player.y - player.ySpeed;
-	if("down" in keysDown) player.y = player.y + player.ySpeed;
-	if("left" in keysDown) player.x = player.x - player.xSpeed;
-	if("right" in keysDown) player.x = player.x + player.xSpeed;
+	if("up" in keysDown) player.yDirection == -1 ? player.y = player.y - player.ySpeed : player.y = player.y - (player.ySpeed / 2);
+	if("down" in keysDown) player.yDirection == 1 ? player.y = player.y + player.ySpeed : player.y = player.y + (player.ySpeed / 2);
+	if("left" in keysDown) player.xDirection == -1 ? player.x = player.x - player.xSpeed : player.x = player.x - (player.xSpeed / 2);
+	if("right" in keysDown) player.xDirection == 1 ? player.x = player.x + player.xSpeed : player.x = player.x + (player.xSpeed / 2);
 }
 
 Player.prototype.chargeUp = function(mouseDown){

@@ -30,7 +30,7 @@ Player.prototype.initImages = function(){
 Player.prototype.setDirection = function(){
 	var player = this;
 	window.onmousemove = function(e){
-		if(e.clientY < player.y){ 
+		if(e.clientY < player.y){
 			player.yDirection = -1;
 			if(e.clientX >= player.x - (player.width * 4) && e.clientX <= player.x + (player.width * 4)){
 				player.imageDirection = 0;
@@ -42,7 +42,7 @@ Player.prototype.setDirection = function(){
 				player.imageDirection = 7;
 				player.xDirection = -1;
 			}
-		} else if(e.clientY >= (player.y - player.height * 2) && e.clientY <= (player.y + player.height * 2)){ 
+		} else if(e.clientY >= (player.y - player.height * 2) && e.clientY <= (player.y + player.height * 2)){
 			player.yDirection = 0;
 			if(e.clientX > player.x){
 				player.imageDirection = 2;

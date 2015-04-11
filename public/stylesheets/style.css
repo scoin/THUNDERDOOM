@@ -1,0 +1,26 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+canvas {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+#background {
+	z-index: 1;
+}
+
+#foreground {
+	z-index: 2;
+}
+
+#cursor {
+	z-index: 3;
+}

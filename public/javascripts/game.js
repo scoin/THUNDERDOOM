@@ -250,7 +250,7 @@ Socket.prototype.broadcastPosition = function(player) {
   setInterval(function() {
     g_socket.emit('playerPosition', {
 			name: player.name, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
-  }, 300)
+  }, 15)
 }
 
 Socket.prototype.syncPosition = function() {
@@ -273,7 +273,7 @@ Socket.prototype.syncPosition = function() {
         g_otherPlayers.push(p)
       }
     })
-  }, 300)
+  }, 15)
 }
 
 Socket.prototype.initialize = function(player) {

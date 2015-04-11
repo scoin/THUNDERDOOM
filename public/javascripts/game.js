@@ -164,7 +164,7 @@ Game.prototype.drawBackground = function(){
 	img.onload = function(){
 		game.canvas.bgCtx.drawImage(img, 0, 0);
 	}
-	
+
 }
 
 Game.prototype.addOtherPlayer = function(player){
@@ -227,9 +227,62 @@ Game.prototype.run = function(){
 	window.requestAnimationFrame(function(){ game.run() });
 }
 
+// SOCKETS
+g_socket = io() // wasn't working when I defined it in the class...
+
+var Socket = function(){
+	return
+}
+
+Socket.prototype.addPlayer = function(player) {
+  g_socket.emit('addPlayer', player.name)
+
+	g_socket.on('addPlayer', function(playerName){
+	  var p = new Player()
+	  p.name = playerName
+	  g_otherPlayers.push(p)
+	})
+}
+
+Socket.prototype.broadcastPosition = function(player) {
+  setInterval(function() {
+    g_socket.emit('playerPosition', {name: player.name, xPos: player.x, yPos: player.y})
+  }, 300)
+}
+
+Socket.prototype.syncPosition = function() {
+  setInterval(function() {
+    g_socket.on('playerPosition', function(moveInfo) {
+      var ran = false
+      for(player in g_otherPlayers) {
+        if(g_otherPlayers[player].name == moveInfo.name) {
+          g_otherPlayers[player].x = moveInfo.xPos
+					g_otherPlayers[player].y = moveInfo.yPos
+
+          ran = true
+          break
+        }
+      }
+      if(ran === false) {
+        var p = new Player()
+        p.name = moveInfo.name
+        g_otherPlayers.push(p)
+      }
+    })
+  }, 300)
+}
+
+Socket.prototype.initialize = function(player) {
+	this.addPlayer(player)
+	this.broadcastPosition(player)
+	this.syncPosition()
+}
+
 window.onload = function(){
 	var game = new Game();
 	game.player = new Player("hi", 100, 100);
+	var socket = new Socket()
+	socket.initialize(game.player)
 	// game.addOtherPlayer(new Player("Greg", 300, 300));
 	game.drawBackground();
 	game.drawForeground();

@@ -248,7 +248,8 @@ Socket.prototype.addPlayer = function(player) {
 
 Socket.prototype.broadcastPosition = function(player) {
   setInterval(function() {
-    g_socket.emit('playerPosition', {name: player.name, xPos: player.x, yPos: player.y})
+    g_socket.emit('playerPosition', {
+			name: player.name, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
   }, 300)
 }
 
@@ -260,6 +261,7 @@ Socket.prototype.syncPosition = function() {
         if(g_otherPlayers[player].name == moveInfo.name) {
           g_otherPlayers[player].x = moveInfo.xPos
 					g_otherPlayers[player].y = moveInfo.yPos
+					g_otherPlayers[player].imageDirection = moveInfo.imageDir
 
           ran = true
           break

@@ -1,3 +1,5 @@
+g_otherPlayers = [] // socket wasn't recognizing it as a class variable
+
 var Player = function(name, x, y){
 	this.name = name;
 	this.x = x;

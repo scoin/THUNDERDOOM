@@ -218,8 +218,8 @@ Game.prototype.run = function(){
 	game.player.chargeUp(game.mouseDown);
 	game.projectiles.forEach(function(projectile, i){
 		projectile.move();
-		if(projectile.x < 0 || projectile.x > game.canvas.width){ 
-			game.projectiles.splice(i, 1); 
+		if(projectile.x < 0 || projectile.x > game.canvas.width){
+			game.projectiles.splice(i, 1);
 		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
 			game.projectiles.splice(i, 1);
 		}

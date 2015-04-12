@@ -284,10 +284,29 @@ Socket.prototype.syncPosition = function() {
   }, 15)
 }
 
+Socket.prototype.emitProjectile = function(xPos, yPos, xEnd, yEnd, speed, pSize, playerName) {
+	g_socket.emit('projectileShot', {
+		startX: xPos,
+		startY: yPos,
+		endX: xEnd,
+		endY: yEnd,
+		speed: speed,
+		size: pSize,
+		originator: playerName
+	})
+}
+
+Socket.prototype.projectileShot = function(canvas) {
+	g_socket.on('projectileShot', function(p) {
+		g_projectiles.push(new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator))
+	})
+}
+
 Socket.prototype.initialize = function(player) {
 	this.addPlayer(player)
 	this.broadcastPosition(player)
 	this.syncPosition()
+	this.projectileShot()
 }
 
 window.onload = function(){
@@ -295,7 +314,6 @@ window.onload = function(){
 	game.player = new Player("hi", 100, 100);
 	var socket = new Socket()
 	socket.initialize(game.player)
-	// game.addOtherPlayer(new Player("Greg", 300, 300));
 	game.drawBackground();
 	game.drawForeground();
 	game.run();

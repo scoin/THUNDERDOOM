@@ -266,18 +266,15 @@ Socket.prototype.addPlayer = function(player) {
     g_socket.emit('addPlayer', player.playerData());
 
     g_socket.on('addPlayer', function(playerData, socketId){
-
         var p = new Player(playerData.name, playerData.x, playerData.y, socketId);
         g_otherPlayers[socketId] = p;
     })
 }
 
 Socket.prototype.popPlayers = function(){
-    setInterval(function() {
-        g_socket.on('popPlayer', function(socketId){
-            delete g_otherPlayers[socketId];
-        })
-    }, 15);
+    g_socket.on('popPlayer', function(socketId){
+        delete g_otherPlayers[socketId];
+    })
 }
 
 Socket.prototype.broadcastPosition = function(player) {
@@ -288,7 +285,6 @@ Socket.prototype.broadcastPosition = function(player) {
 }
 
 Socket.prototype.syncPosition = function() {
-  setInterval(function() {
     g_socket.on('playerPosition', function(moveInfo, socketId) {
       if(g_otherPlayers[socketId]){
         g_otherPlayers[socketId].x = moveInfo.xPos;
@@ -299,7 +295,6 @@ Socket.prototype.syncPosition = function() {
         g_otherPlayers[socketId] = p;
       }
     })
-  }, 15)
 }
 
 Socket.prototype.emitProjectile = function(xPos, yPos, xEnd, yEnd, speed, pSize, playerName) {
@@ -339,9 +334,6 @@ window.onload = function(){
     game.run();
 }
 
-// other players array refactor to object, socket id as key
-// sync_position
-// give data read method to player for cleanup
 // better oo / optimize sockets
 // projectile player collision
 // projectile speed fix

@@ -1,3 +1,5 @@
+g_otherPlayers = [] // socket wasn't recognizing it as a class variable
+
 var Player = function(name, x, y){
 	this.name = name;
 	this.x = x;
@@ -28,7 +30,7 @@ Player.prototype.initImages = function(){
 Player.prototype.setDirection = function(){
 	var player = this;
 	window.onmousemove = function(e){
-		if(e.clientY < player.y){ 
+		if(e.clientY < player.y){
 			player.yDirection = -1;
 			if(e.clientX >= player.x - (player.width * 4) && e.clientX <= player.x + (player.width * 4)){
 				player.imageDirection = 0;
@@ -40,7 +42,7 @@ Player.prototype.setDirection = function(){
 				player.imageDirection = 7;
 				player.xDirection = -1;
 			}
-		} else if(e.clientY >= (player.y - player.height * 2) && e.clientY <= (player.y + player.height * 2)){ 
+		} else if(e.clientY >= (player.y - player.height * 2) && e.clientY <= (player.y + player.height * 2)){
 			player.yDirection = 0;
 			if(e.clientX > player.x){
 				player.imageDirection = 2;
@@ -147,6 +149,8 @@ Game.prototype.drawForeground = function(){
 	var game = this;
 	game.canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 	game.canvas.drawPlayer(game.player);
+	for(player in g_otherPlayers) { game.canvas.drawPlayer(g_otherPlayers[player]) }
+
 	game.projectiles.forEach(function(projectile, i){
 		game.canvas.drawProjectile(projectile);
 	})
@@ -162,7 +166,7 @@ Game.prototype.drawBackground = function(){
 	img.onload = function(){
 		game.canvas.bgCtx.drawImage(img, 0, 0);
 	}
-	
+
 }
 
 Game.prototype.addOtherPlayer = function(player){
@@ -214,8 +218,8 @@ Game.prototype.run = function(){
 	game.player.chargeUp(game.mouseDown);
 	game.projectiles.forEach(function(projectile, i){
 		projectile.move();
-		if(projectile.x < 0 || projectile.x > game.canvas.width){ 
-			game.projectiles.splice(i, 1); 
+		if(projectile.x < 0 || projectile.x > game.canvas.width){
+			game.projectiles.splice(i, 1);
 		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
 			game.projectiles.splice(i, 1);
 		}
@@ -225,9 +229,64 @@ Game.prototype.run = function(){
 	window.requestAnimationFrame(function(){ game.run() });
 }
 
+// SOCKETS
+g_socket = io() // wasn't working when I defined it in the class...
+
+var Socket = function(){
+	return
+}
+
+Socket.prototype.addPlayer = function(player) {
+  g_socket.emit('addPlayer', player.name)
+
+	g_socket.on('addPlayer', function(playerName){
+	  var p = new Player()
+	  p.name = playerName
+	  g_otherPlayers.push(p)
+	})
+}
+
+Socket.prototype.broadcastPosition = function(player) {
+  setInterval(function() {
+    g_socket.emit('playerPosition', {
+			name: player.name, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
+  }, 15)
+}
+
+Socket.prototype.syncPosition = function() {
+  setInterval(function() {
+    g_socket.on('playerPosition', function(moveInfo) {
+      var ran = false
+      for(player in g_otherPlayers) {
+        if(g_otherPlayers[player].name == moveInfo.name) {
+          g_otherPlayers[player].x = moveInfo.xPos
+					g_otherPlayers[player].y = moveInfo.yPos
+					g_otherPlayers[player].imageDirection = moveInfo.imageDir
+
+          ran = true
+          break
+        }
+      }
+      if(ran === false) {
+        var p = new Player()
+        p.name = moveInfo.name
+        g_otherPlayers.push(p)
+      }
+    })
+  }, 15)
+}
+
+Socket.prototype.initialize = function(player) {
+	this.addPlayer(player)
+	this.broadcastPosition(player)
+	this.syncPosition()
+}
+
 window.onload = function(){
 	var game = new Game();
 	game.player = new Player("hi", 100, 100);
+	var socket = new Socket()
+	socket.initialize(game.player)
 	// game.addOtherPlayer(new Player("Greg", 300, 300));
 	game.drawBackground();
 	game.drawForeground();

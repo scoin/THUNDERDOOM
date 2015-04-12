@@ -7,9 +7,15 @@ module.exports = function(io){
     socket.on('addPlayer', function(playerName) {
       socket.broadcast.emit('addPlayer', playerName)
     })
+
     socket.on('playerPosition', function(moveInfo) {
       socket.broadcast.emit('playerPosition', moveInfo)
     })
+
+    socket.on('projectileShot', function(projectile_init_dict) {
+      socket.broadcast.emit('projectileShot', projectile_init_dict)
+    })
+
     socket.on('disconnect', function(){
       console.log('user disconnected');
     });

@@ -167,7 +167,6 @@ Game.prototype.drawBackground = function(){
 	img.onload = function(){
 		game.canvas.bgCtx.drawImage(img, 0, 0);
 	}
-
 }
 
 Game.prototype.addOtherPlayer = function(player){
@@ -213,8 +212,16 @@ Game.prototype.run = function(){
 	window.onmouseup = function(e){
 		game.mouseDown = false;
 		var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
-		console.log(pSize)
 		game.projectiles.push(new Projectile(game.player.x, game.player.y, e.clientX, e.clientY, 10, pSize, game.player.name));
+		g_socket.emit('projectileShot', {
+			startX: game.player.x,
+			startY: game.player.y,
+			endX: e.clientX,
+			endY: e.clientY,
+			speed: 10,
+			size: pSize,
+			originator: game.player.name
+		})
 	}
 	game.player.chargeUp(game.mouseDown);
 	game.projectiles.forEach(function(projectile, i){

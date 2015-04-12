@@ -153,13 +153,13 @@ Game.prototype.drawForeground = function(){
 		game.canvas.drawPlayer(g_otherPlayers[player]);
 	});
 
-	game.projectiles.forEach(function(projectile, i){
-		game.canvas.drawProjectile(projectile);
-	});
+	for(var i in game.projectiles){
+		game.canvas.drawProjectile(game.projectiles[i]);
+	};
 	// projectiles from socket
-	g_projectiles.forEach(function(projectile){
-		game.canvas.drawProjectile(projectile);
-	});
+	for(var i in g_projectiles){
+		game.canvas.drawProjectile(g_projectiles[i]);
+	};
 	// game.otherPlayers.forEach(function(player, i){
 	// 	game.canvas.drawPlayer(player);
 	// });
@@ -232,23 +232,24 @@ Game.prototype.run = function(){
 		})
 	}
 	game.player.chargeUp(game.mouseDown);
-	game.projectiles.forEach(function(projectile, i){
+	for(var i in game.projectiles){
+		var projectile = game.projectiles[i];
+		console.log(i, projectile)
 		projectile.move();
-		if(projectile.x < 0 || projectile.x > game.canvas.width){
-			game.projectiles.splice(i, 1);
-		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
+		if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
+			console.log('dead')
 			game.projectiles.splice(i, 1);
 		}
-	});
-	g_projectiles.forEach(function(projectile, i){
+	};
+	for(var i in g_projectiles){
+		var projectile = g_projectiles[i];
 		projectile.move();
-		if(projectile.x < 0 || projectile.x > game.canvas.width){
-			game.projectiles.splice(i, 1);
-		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
-			game.projectiles.splice(i, 1);
+		if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
+			g_projectiles.splice(i, 1);
 		}
-	});
+	};
 	game.getInput();
+	if(g_projectiles.length > 0) console.log(g_projectiles)
 	game.drawForeground();
 	window.requestAnimationFrame(function(){ game.run() });
 }
@@ -264,10 +265,10 @@ Socket.prototype.addPlayer = function(player) {
   g_socket.emit('addPlayer', player.name)
 
 	g_socket.on('addPlayer', function(playerName, socketId){
-	  var p = new Player()
-	  p.name = playerName
+	  var p = new Player();
+	  p.name = playerName;
 	  p.id = socketId;
-	  g_otherPlayers.push(p)
+	  g_otherPlayers.push(p);
 	})
 }
 
@@ -339,8 +340,9 @@ Socket.prototype.initialize = function(player) {
 }
 
 window.onload = function(){
+	var name = prompt("Enter a badass wizard name");
 	var game = new Game();
-	game.player = new Player("hi", 100, 100);
+	game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
 	var socket = new Socket()
 	socket.initialize(game.player)
 	game.drawBackground();

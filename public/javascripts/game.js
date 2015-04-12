@@ -155,6 +155,10 @@ Game.prototype.drawForeground = function(){
 	game.projectiles.forEach(function(projectile, i){
 		game.canvas.drawProjectile(projectile);
 	})
+	// projectiles from socket
+	g_projectiles.forEach(function(projectile){
+		game.canvas.drawProjectile(projectile);
+	})
 	// game.otherPlayers.forEach(function(player, i){
 	// 	game.canvas.drawPlayer(player);
 	// });
@@ -232,6 +236,15 @@ Game.prototype.run = function(){
 			game.projectiles.splice(i, 1);
 		}
 	});
+	g_projectiles.forEach(function(projectile, i){
+		projectile.move();
+		if(projectile.x < 0 || projectile.x > game.canvas.width){
+			game.projectiles.splice(i, 1);
+		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
+			game.projectiles.splice(i, 1);
+		}
+	});
+
 	game.getInput();
 	game.drawForeground();
 	window.requestAnimationFrame(function(){ game.run() });

@@ -149,9 +149,9 @@ Game.prototype.drawForeground = function(){
 	var game = this;
 	game.canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 	game.canvas.drawPlayer(game.player);
-	g_otherPlayers.forEach(function(i, player){ 
-		game.canvas.drawPlayer(g_otherPlayers[player]);
-	});
+	for(var i in g_otherPlayers){
+		game.canvas.drawPlayer(g_otherPlayers[i]);
+	};
 
 	for(var i in game.projectiles){
 		game.canvas.drawProjectile(game.projectiles[i]);

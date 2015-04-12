@@ -3,10 +3,11 @@ g_projectiles = []
 
 var Player = function(name, x, y){
 	this.name = name;
+	this.id = undefined;
 	this.x = x;
 	this.y = y;
-	this.xSpeed = 4;
-	this.ySpeed = 4;
+	this.xSpeed = 2;
+	this.ySpeed = 2;
 	this.xDirection = 0;
 	this.yDirection = 1;
 	this.imageDirection = 4;
@@ -28,42 +29,40 @@ Player.prototype.initImages = function(){
 	}
 }
 
-Player.prototype.setDirection = function(){
+Player.prototype.setDirection = function(clientX, clientY){
 	var player = this;
-	window.onmousemove = function(e){
-		if(e.clientY < player.y){
-			player.yDirection = -1;
-			if(e.clientX >= player.x - (player.width * 4) && e.clientX <= player.x + (player.width * 4)){
-				player.imageDirection = 0;
-				player.xDirection = 0;
-			} else if(e.clientX > player.x){
-				player.imageDirection = 1;
-				player.xDirection = 1;
-			} else if(e.clientX < player.x){
-				player.imageDirection = 7;
-				player.xDirection = -1;
-			}
-		} else if(e.clientY >= (player.y - player.height * 2) && e.clientY <= (player.y + player.height * 2)){
-			player.yDirection = 0;
-			if(e.clientX > player.x){
-				player.imageDirection = 2;
-				player.xDirection = 1;
-			} else if(e.clientX < player.x){
-				player.imageDirection = 6;
-				player.xDirection = -1;
-			}
-		} else if(e.clientY > player.y){
-			player.yDirection = 1;
-			if(e.clientX >= player.x - (player.width * 4) && e.clientX <= player.x + (player.width * 4)){
-				player.imageDirection = 4;
-				player.xDirection = 0;
-			} else if(e.clientX > player.x){
-				player.imageDirection = 3;
-				player.xDirection = 1;
-			} else if(e.clientX < player.x){
-				player.imageDirection = 5;
-				player.xDirection = -1;
-			}
+	if(clientY < player.y){
+		player.yDirection = -1;
+		if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
+			player.imageDirection = 0;
+			player.xDirection = 0;
+		} else if(clientX > player.x){
+			player.imageDirection = 1;
+			player.xDirection = 1;
+		} else if(clientX < player.x){
+			player.imageDirection = 7;
+			player.xDirection = -1;
+		}
+	} else if(clientY >= (player.y - player.height * 2) && clientY <= (player.y + player.height * 2)){
+		player.yDirection = 0;
+		if(clientX > player.x){
+			player.imageDirection = 2;
+			player.xDirection = 1;
+		} else if(clientX < player.x){
+			player.imageDirection = 6;
+			player.xDirection = -1;
+		}
+	} else if(clientY > player.y){
+		player.yDirection = 1;
+		if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
+			player.imageDirection = 4;
+			player.xDirection = 0;
+		} else if(clientX > player.x){
+			player.imageDirection = 3;
+			player.xDirection = 1;
+		} else if(clientX < player.x){
+			player.imageDirection = 5;
+			player.xDirection = -1;
 		}
 	}
 }
@@ -123,9 +122,9 @@ Canvas.prototype.drawPlayer = function(player){
 Canvas.prototype.drawProjectile = function(projectile){
 	var canvas = this;
 	canvas.fgCtx.beginPath();
-	canvas.fgCtx.arc(projectile.x, projectile.y, projectile.size, 0, 2 * Math.PI);
+	canvas.fgCtx.arc(projectile.x, projectile.y, projectile.size, 8, 5 * Math.PI);
 	var grd = canvas.fgCtx.createRadialGradient(projectile.x, projectile.y, projectile.size, projectile.x + projectile.size, projectile.y + projectile.size, projectile.size);
-	grd.addColorStop(0, 'blue');
+	grd.addColorStop(0, '#FFCC5E');
 	grd.addColorStop(1, 'white');
 	canvas.fgCtx.fillStyle=grd;
 	canvas.fgCtx.fill();
@@ -150,18 +149,17 @@ Game.prototype.drawForeground = function(){
 	var game = this;
 	game.canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 	game.canvas.drawPlayer(game.player);
-	for(player in g_otherPlayers) { game.canvas.drawPlayer(g_otherPlayers[player]) }
+	for(var i in g_otherPlayers){
+		game.canvas.drawPlayer(g_otherPlayers[i]);
+	};
 
-	game.projectiles.forEach(function(projectile, i){
-		game.canvas.drawProjectile(projectile);
-	})
+	for(var i in game.projectiles){
+		game.canvas.drawProjectile(game.projectiles[i]);
+	};
 	// projectiles from socket
-	g_projectiles.forEach(function(projectile){
-		game.canvas.drawProjectile(projectile);
-	})
-	// game.otherPlayers.forEach(function(player, i){
-	// 	game.canvas.drawPlayer(player);
-	// });
+	for(var i in g_projectiles){
+		game.canvas.drawProjectile(g_projectiles[i]);
+	};
 }
 
 Game.prototype.drawBackground = function(){
@@ -193,22 +191,19 @@ Game.prototype.getInput = function(){
 		delete game.keysDown['down'];
 	}
 	game.player.move(game.keysDown);
-	// game.otherPlayers.forEach(function(player, i){
-	// 	player.move(game.keysDown);
-	// });
 }
 
 Game.prototype.run = function(){
 	var game = this;
 	game.player.setDirection();
-	// game.otherPlayers.forEach(function(player, i){
-	// 	player.setDirection();
-	// });
 	window.onkeydown = function(e){
 		game.keysDown[game.controls[String.fromCharCode(e.which)]] = true;
 	}
 	window.onkeyup = function(e){
 		delete game.keysDown[game.controls[String.fromCharCode(e.which)]];
+	}
+	window.onmousemove = function(e){
+		game.player.setDirection(e.clientX, e.clientY);
 	}
 	window.onmousedown = function(e){
 		game.mouseDown = true;
@@ -228,23 +223,20 @@ Game.prototype.run = function(){
 		})
 	}
 	game.player.chargeUp(game.mouseDown);
-	game.projectiles.forEach(function(projectile, i){
+	for(var i in game.projectiles){
+		var projectile = game.projectiles[i];
 		projectile.move();
-		if(projectile.x < 0 || projectile.x > game.canvas.width){
-			game.projectiles.splice(i, 1);
-		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
+		if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
 			game.projectiles.splice(i, 1);
 		}
-	});
-	g_projectiles.forEach(function(projectile, i){
+	};
+	for(var i in g_projectiles){
+		var projectile = g_projectiles[i];
 		projectile.move();
-		if(projectile.x < 0 || projectile.x > game.canvas.width){
-			game.projectiles.splice(i, 1);
-		} else if(projectile.y < 0 || projectile.y > game.canvas.height) {
-			game.projectiles.splice(i, 1);
+		if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
+			g_projectiles.splice(i, 1);
 		}
-	});
-
+	};
 	game.getInput();
 	game.drawForeground();
 	window.requestAnimationFrame(function(){ game.run() });
@@ -260,11 +252,23 @@ var Socket = function(){
 Socket.prototype.addPlayer = function(player) {
   g_socket.emit('addPlayer', player.name)
 
-	g_socket.on('addPlayer', function(playerName){
-	  var p = new Player()
-	  p.name = playerName
-	  g_otherPlayers.push(p)
+	g_socket.on('addPlayer', function(playerName, socketId){
+	  var p = new Player();
+	  p.name = playerName;
+	  p.id = socketId;
+	  g_otherPlayers.push(p);
 	})
+}
+
+Socket.prototype.popPlayers = function(){
+	setInterval(function() {
+		g_socket.on('popPlayer', function(socketId){
+			var dcPlayer = g_otherPlayers.filter(function(player) {
+			  return player.id == socketId;
+			});
+			g_otherPlayers.splice(g_otherPlayers.indexOf(dcPlayer[0]), 1);
+		})
+	}, 15);
 }
 
 Socket.prototype.broadcastPosition = function(player) {
@@ -317,14 +321,16 @@ Socket.prototype.projectileShot = function(canvas) {
 
 Socket.prototype.initialize = function(player) {
 	this.addPlayer(player)
+	this.popPlayers();
 	this.broadcastPosition(player)
 	this.syncPosition()
 	this.projectileShot()
 }
 
 window.onload = function(){
+	var name = prompt("Enter a badass wizard name");
 	var game = new Game();
-	game.player = new Player("hi", 100, 100);
+	game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
 	var socket = new Socket()
 	socket.initialize(game.player)
 	game.drawBackground();

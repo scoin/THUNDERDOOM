@@ -5,7 +5,7 @@ module.exports = function(io){
   io.on('connection', function(socket){
     console.log('a user connected');
     socket.on('addPlayer', function(playerName) {
-      socket.broadcast.emit('addPlayer', playerName)
+      socket.broadcast.emit('addPlayer', playerName, socket.id);
     })
 
     socket.on('playerPosition', function(moveInfo) {
@@ -18,6 +18,7 @@ module.exports = function(io){
 
     socket.on('disconnect', function(){
       console.log('user disconnected');
+      socket.broadcast.emit('popPlayer', socket.id);
     });
   });
 

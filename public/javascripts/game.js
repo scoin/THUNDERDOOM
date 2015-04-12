@@ -27,42 +27,40 @@ Player.prototype.initImages = function(){
 	}
 }
 
-Player.prototype.setDirection = function(){
+Player.prototype.setDirection = function(clientX, clientY){
 	var player = this;
-	window.onmousemove = function(e){
-		if(e.clientY < player.y){
-			player.yDirection = -1;
-			if(e.clientX >= player.x - (player.width * 4) && e.clientX <= player.x + (player.width * 4)){
-				player.imageDirection = 0;
-				player.xDirection = 0;
-			} else if(e.clientX > player.x){
-				player.imageDirection = 1;
-				player.xDirection = 1;
-			} else if(e.clientX < player.x){
-				player.imageDirection = 7;
-				player.xDirection = -1;
-			}
-		} else if(e.clientY >= (player.y - player.height * 2) && e.clientY <= (player.y + player.height * 2)){
-			player.yDirection = 0;
-			if(e.clientX > player.x){
-				player.imageDirection = 2;
-				player.xDirection = 1;
-			} else if(e.clientX < player.x){
-				player.imageDirection = 6;
-				player.xDirection = -1;
-			}
-		} else if(e.clientY > player.y){
-			player.yDirection = 1;
-			if(e.clientX >= player.x - (player.width * 4) && e.clientX <= player.x + (player.width * 4)){
-				player.imageDirection = 4;
-				player.xDirection = 0;
-			} else if(e.clientX > player.x){
-				player.imageDirection = 3;
-				player.xDirection = 1;
-			} else if(e.clientX < player.x){
-				player.imageDirection = 5;
-				player.xDirection = -1;
-			}
+	if(clientY < player.y){
+		player.yDirection = -1;
+		if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
+			player.imageDirection = 0;
+			player.xDirection = 0;
+		} else if(clientX > player.x){
+			player.imageDirection = 1;
+			player.xDirection = 1;
+		} else if(clientX < player.x){
+			player.imageDirection = 7;
+			player.xDirection = -1;
+		}
+	} else if(clientY >= (player.y - player.height * 2) && clientY <= (player.y + player.height * 2)){
+		player.yDirection = 0;
+		if(clientX > player.x){
+			player.imageDirection = 2;
+			player.xDirection = 1;
+		} else if(clientX < player.x){
+			player.imageDirection = 6;
+			player.xDirection = -1;
+		}
+	} else if(clientY > player.y){
+		player.yDirection = 1;
+		if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
+			player.imageDirection = 4;
+			player.xDirection = 0;
+		} else if(clientX > player.x){
+			player.imageDirection = 3;
+			player.xDirection = 1;
+		} else if(clientX < player.x){
+			player.imageDirection = 5;
+			player.xDirection = -1;
 		}
 	}
 }
@@ -205,6 +203,9 @@ Game.prototype.run = function(){
 	}
 	window.onkeyup = function(e){
 		delete game.keysDown[game.controls[String.fromCharCode(e.which)]];
+	}
+	window.onmousemove = function(e){
+		game.player.setDirection(e.clientX, e.clientY);
 	}
 	window.onmousedown = function(e){
 		game.mouseDown = true;

@@ -160,9 +160,6 @@ Game.prototype.drawForeground = function(){
 	for(var i in g_projectiles){
 		game.canvas.drawProjectile(g_projectiles[i]);
 	};
-	// game.otherPlayers.forEach(function(player, i){
-	// 	game.canvas.drawPlayer(player);
-	// });
 }
 
 Game.prototype.drawBackground = function(){
@@ -194,17 +191,11 @@ Game.prototype.getInput = function(){
 		delete game.keysDown['down'];
 	}
 	game.player.move(game.keysDown);
-	// game.otherPlayers.forEach(function(player, i){
-	// 	player.move(game.keysDown);
-	// });
 }
 
 Game.prototype.run = function(){
 	var game = this;
 	game.player.setDirection();
-	// game.otherPlayers.forEach(function(player, i){
-	// 	player.setDirection();
-	// });
 	window.onkeydown = function(e){
 		game.keysDown[game.controls[String.fromCharCode(e.which)]] = true;
 	}
@@ -234,10 +225,8 @@ Game.prototype.run = function(){
 	game.player.chargeUp(game.mouseDown);
 	for(var i in game.projectiles){
 		var projectile = game.projectiles[i];
-		console.log(i, projectile)
 		projectile.move();
 		if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
-			console.log('dead')
 			game.projectiles.splice(i, 1);
 		}
 	};
@@ -249,7 +238,6 @@ Game.prototype.run = function(){
 		}
 	};
 	game.getInput();
-	if(g_projectiles.length > 0) console.log(g_projectiles)
 	game.drawForeground();
 	window.requestAnimationFrame(function(){ game.run() });
 }

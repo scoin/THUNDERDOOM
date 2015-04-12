@@ -2,8 +2,8 @@ var Player = function(name, x, y){
 	this.name = name;
 	this.x = x;
 	this.y = y;
-	this.xSpeed = 4;
-	this.ySpeed = 4;
+	this.xSpeed = 2;
+	this.ySpeed = 2;
 	this.xDirection = 0;
 	this.yDirection = 1;
 	this.imageDirection = 4;
@@ -122,7 +122,7 @@ Canvas.prototype.drawProjectile = function(projectile){
 	canvas.fgCtx.beginPath();
 	canvas.fgCtx.arc(projectile.x, projectile.y, projectile.size, 0, 2 * Math.PI);
 	var grd = canvas.fgCtx.createRadialGradient(projectile.x, projectile.y, projectile.size, projectile.x + projectile.size, projectile.y + projectile.size, projectile.size);
-	grd.addColorStop(0, 'blue');
+	grd.addColorStop(0, 'orange');
 	grd.addColorStop(1, 'white');
 	canvas.fgCtx.fillStyle=grd;
 	canvas.fgCtx.fill();

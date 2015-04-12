@@ -3,6 +3,7 @@ g_projectiles = []
 
 var Player = function(name, x, y){
 	this.name = name;
+	this.id = undefined;
 	this.x = x;
 	this.y = y;
 	this.xSpeed = 2;
@@ -121,9 +122,9 @@ Canvas.prototype.drawPlayer = function(player){
 Canvas.prototype.drawProjectile = function(projectile){
 	var canvas = this;
 	canvas.fgCtx.beginPath();
-	canvas.fgCtx.arc(projectile.x, projectile.y, projectile.size, 0, 2 * Math.PI);
+	canvas.fgCtx.arc(projectile.x, projectile.y, projectile.size, 8, 5 * Math.PI);
 	var grd = canvas.fgCtx.createRadialGradient(projectile.x, projectile.y, projectile.size, projectile.x + projectile.size, projectile.y + projectile.size, projectile.size);
-	grd.addColorStop(0, 'orange');
+	grd.addColorStop(0, '#FFCC5E');
 	grd.addColorStop(1, 'white');
 	canvas.fgCtx.fillStyle=grd;
 	canvas.fgCtx.fill();
@@ -148,15 +149,17 @@ Game.prototype.drawForeground = function(){
 	var game = this;
 	game.canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
 	game.canvas.drawPlayer(game.player);
-	for(player in g_otherPlayers) { game.canvas.drawPlayer(g_otherPlayers[player]) }
+	g_otherPlayers.forEach(function(i, player){ 
+		game.canvas.drawPlayer(g_otherPlayers[player]);
+	});
 
 	game.projectiles.forEach(function(projectile, i){
 		game.canvas.drawProjectile(projectile);
-	})
+	});
 	// projectiles from socket
 	g_projectiles.forEach(function(projectile){
 		game.canvas.drawProjectile(projectile);
-	})
+	});
 	// game.otherPlayers.forEach(function(player, i){
 	// 	game.canvas.drawPlayer(player);
 	// });
@@ -245,7 +248,6 @@ Game.prototype.run = function(){
 			game.projectiles.splice(i, 1);
 		}
 	});
-
 	game.getInput();
 	game.drawForeground();
 	window.requestAnimationFrame(function(){ game.run() });
@@ -261,11 +263,23 @@ var Socket = function(){
 Socket.prototype.addPlayer = function(player) {
   g_socket.emit('addPlayer', player.name)
 
-	g_socket.on('addPlayer', function(playerName){
+	g_socket.on('addPlayer', function(playerName, socketId){
 	  var p = new Player()
 	  p.name = playerName
+	  p.id = socketId;
 	  g_otherPlayers.push(p)
 	})
+}
+
+Socket.prototype.popPlayers = function(){
+	setInterval(function() {
+		g_socket.on('popPlayer', function(socketId){
+			var dcPlayer = g_otherPlayers.filter(function(player) {
+			  return player.id == socketId;
+			});
+			g_otherPlayers.splice(g_otherPlayers.indexOf(dcPlayer[0]), 1);
+		})
+	}, 15);
 }
 
 Socket.prototype.broadcastPosition = function(player) {
@@ -318,6 +332,7 @@ Socket.prototype.projectileShot = function(canvas) {
 
 Socket.prototype.initialize = function(player) {
 	this.addPlayer(player)
+	this.popPlayers();
 	this.broadcastPosition(player)
 	this.syncPosition()
 	this.projectileShot()

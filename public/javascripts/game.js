@@ -22,18 +22,18 @@ var Player = function(name, x, y, id){
 Player.prototype.playerData = function(){
     var player = this;
     var data_obj = {
-                    "name": player.name,
-                    "id": player.id,
-                    "x": player.x,
-                    "y": player.y,
-                    "xSpeed": player.xSpeed,
-                    "ySpeed": player.ySpeed,
-                    "xDirection": player.xDirection,
-                    "yDirection": player.yDirection,
-                    "imageDirection": player.imageDirection,
-                    "charge": player.charge,
-                    "kills": player.kills
-                    }
+		    "name": player.name,
+		    "id": player.id,
+		    "x": player.x,
+		    "y": player.y,
+		    "xSpeed": player.xSpeed,
+		    "ySpeed": player.ySpeed,
+		    "xDirection": player.xDirection,
+		    "yDirection": player.yDirection,
+		    "imageDirection": player.imageDirection,
+		    "charge": player.charge,
+		    "kills": player.kills
+    }
     return data_obj;
 }
 
@@ -104,6 +104,10 @@ Player.prototype.chargeUp = function(mouseDown){
 
 Player.prototype.detectCollision = function(obj){
     var player = this;
+		if(player.id === obj.originator) {
+			return false
+		}
+
     var playerxRange = [player.x, player.x + player.width];
     var playeryRange = [player.y, player.y + player.height];
     var objxRange = [obj.x - (obj.width/2), obj.x + (obj.width/2)];
@@ -189,10 +193,10 @@ var Game = function(){
     this.otherPlayers = [];
     this.projectiles = [];
     this.controls = {
-        "W": "up",
-        "S": "down",
-        "A": "left",
-        "D": "right"
+      "W": "up",
+      "S": "down",
+      "A": "left",
+      "D": "right"
     }
     this.keysDown = {};
     this.mouseDown = false;
@@ -206,10 +210,6 @@ Game.prototype.drawForeground = function(){
         game.canvas.drawPlayer(g_otherPlayers[i]);
     };
 
-    for(var i in game.projectiles){
-        game.canvas.drawProjectile(game.projectiles[i]);
-    };
-    // projectiles from socket
     for(var i in g_projectiles){
         game.canvas.drawProjectile(g_projectiles[i]);
     };
@@ -259,17 +259,10 @@ Game.prototype.run = function(){
     window.onmouseup = function(e){
         game.mouseDown = false;
         var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
-        game.projectiles.push(new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id));
+        g_projectiles.push(new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id));
         game.socket.emitProjectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id);
     }
     game.player.chargeUp(game.mouseDown);
-    for(var i in game.projectiles){
-        var projectile = game.projectiles[i];
-        projectile.move();
-        if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
-            game.projectiles.splice(i, 1);
-        }
-    };
     for(var i in g_projectiles){
         var projectile = g_projectiles[i];
         projectile.move();
@@ -309,7 +302,7 @@ Socket.prototype.popPlayers = function(){
 Socket.prototype.broadcastPosition = function(player) {
   setInterval(function() {
     g_socket.emit('playerPosition', {
-            name: player.name, id: player.id, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
+      name: player.name, id: player.id, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
   }, 15)
 }
 
@@ -371,8 +364,8 @@ Game.prototype.getProjectileHits = function(){
         var hitPlayer = hitData.player;
         var projectile = hitData.projectile;
         if(projectile.originator === game.player.id){
-            var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
-            game.projectiles.splice(i, 1);
+            var i = g_projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
+            g_projectiles.splice(i, 1);
         }
         // condition for player in g_otherplayers, remove from g_projectiles bla bla
     })

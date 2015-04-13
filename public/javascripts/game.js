@@ -129,6 +129,15 @@ Player.prototype.respawn = function(game) {
 	}, 1000)
 }
 
+Player.prototype.registerKill = function() {
+	var player = this;
+	g_socket.on('playerDead', function(killDict) {
+		if(player.id === killDict.killerId) {
+			player.kills += 1
+		}
+	})
+}
+
 var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.x = startX;
     this.y = startY;
@@ -279,8 +288,11 @@ Game.prototype.run = function(){
         var playerHit = game.player.detectCollision(projectile);
         if(playerHit === true){
 					game.player.hp -= projectile.damage
-					console.log(game.player.hp)
 					game.socket.emitProjectileHit(game.player, projectile)
+					if(game.player.hp <= 0){
+						game.playerDead(game.player, projectile)
+						game.player.registerKill()
+					}
 				}
         if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true){
           g_projectiles.splice(i, 1);
@@ -288,17 +300,14 @@ Game.prototype.run = function(){
     };
     game.getInput();
     game.drawForeground();
-		if(game.player.hp <= 0){
-			game.playerDead(game.player)
-		}
     window.requestAnimationFrame(function(){ game.run() });
 }
 
-Game.prototype.playerDead = function(player) {
+Game.prototype.playerDead = function(player, projectile) {
 	var game = this
 	game.player.hp += 10
 	game.player.respawn(game)
-	g_socket.emit('playerDead', player.id)
+	g_socket.emit('playerDead', {playerId: player.id, killerId: projectile.originator})
 }
 
 // SOCKETS

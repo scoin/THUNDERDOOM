@@ -144,8 +144,10 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.speed = speed;
     this.xPath = (endX - startX);
     this.yPath = (endY - startY);
-    this.xInc = Math.floor(this.xPath / speed);
-    this.yInc = Math.floor(this.yPath / speed);
+		this.pathAngle = Math.atan((endY - startY)/(endX - startX))
+		console.log(this.pathAngle)
+    this.xInc = Math.cos(this.pathAngle) * speed;
+    this.yInc = Math.sin(this.pathAngle) * speed;
     this.size = size;
     this.width = size;
     this.height = size;

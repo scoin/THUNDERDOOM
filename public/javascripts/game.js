@@ -400,8 +400,10 @@ Game.prototype.getProjectileHits = function(){
         if(projectile.originator === game.player.id){
             var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
             game.projectiles.splice(i, 1);
+        } else if(g_otherPlayers[projectile.originator]){
+            var i = g_projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
+            g_projectiles.splice(i, 1);
         }
-        // condition for player in g_otherplayers, remove from g_projectiles bla bla
     })
 }
 
@@ -411,9 +413,9 @@ window.onload = function(){
     game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
     game.socket = new Socket()
     game.socket.initialize(game.player);
-    game.getProjectileHits();
     game.drawBackground();
     game.drawForeground();
+    game.getProjectileHits();
     game.run();
 }
 

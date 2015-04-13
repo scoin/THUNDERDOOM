@@ -134,19 +134,19 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
 Projectile.prototype.projectileData = function(){
     var projectile = this;
     var data_obj = {
-            "x": projectile.x,
-            "y": projectile.y,
-            "speed": projectile.speed,
-            "xPath": projectile.xPath,
-            "yPath" : projectile.yPath,
-            "xInc" : projectile.xInc,
-            "yInc" : projectile.yInc,
-            "size" : projectile.size,
-            "width" : projectile.width,
-            "height" : projectile.height,
-            "originator" : projectile.originator,
-            "id": projectile.id
-        }
+	    "x": projectile.x,
+	    "y": projectile.y,
+	    "speed": projectile.speed,
+	    "xPath": projectile.xPath,
+	    "yPath" : projectile.yPath,
+	    "xInc" : projectile.xInc,
+	    "yInc" : projectile.yInc,
+	    "size" : projectile.size,
+	    "width" : projectile.width,
+	    "height" : projectile.height,
+	    "originator" : projectile.originator,
+	    "id": projectile.id
+    }
     return data_obj;
 }
 

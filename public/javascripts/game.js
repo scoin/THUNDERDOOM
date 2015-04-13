@@ -121,6 +121,14 @@ Player.prototype.detectCollision = function(obj){
     return false;
 }
 
+Player.prototype.respawn = function(game) {
+	var player = this;
+	setTimeout(function() {
+		player.x = Math.floor((Math.random() * (game.canvas.width - 50)))
+		player.y = Math.floor((Math.random() * (game.canvas.height - 50)))
+	}, 1000)
+}
+
 var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.x = startX;
     this.y = startY;
@@ -281,14 +289,16 @@ Game.prototype.run = function(){
     game.getInput();
     game.drawForeground();
 		if(game.player.hp <= 0){
-			game.playerDead()
+			game.playerDead(game.player)
 		}
     window.requestAnimationFrame(function(){ game.run() });
 }
 
 Game.prototype.playerDead = function(player) {
-	alert("s a d")
-
+	var game = this
+	game.player.hp += 10
+	game.player.respawn(game)
+	g_socket.emit('playerDead', player.id)
 }
 
 // SOCKETS

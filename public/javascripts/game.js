@@ -15,6 +15,7 @@ var Player = function(name, x, y, id){
     this.width = 35;
     this.height = 56;
     this.charge = 0;
+		this.hp = 10;
     this.kills = 0;
     this.initImages();
 }
@@ -132,6 +133,7 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.width = size;
     this.height = size;
     this.originator = originator;
+		this.damage = 5;
     this.id = Math.random() * 10000;
 }
 
@@ -267,14 +269,26 @@ Game.prototype.run = function(){
         var projectile = g_projectiles[i];
         projectile.move();
         var playerHit = game.player.detectCollision(projectile);
-        if(playerHit === true){ game.socket.emitProjectileHit(game.player, projectile) }
+        if(playerHit === true){
+					game.player.hp -= projectile.damage
+					console.log(game.player.hp)
+					game.socket.emitProjectileHit(game.player, projectile)
+				}
         if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true){
           g_projectiles.splice(i, 1);
         }
     };
     game.getInput();
     game.drawForeground();
+		if(game.player.hp <= 0){
+			game.playerDead()
+		}
     window.requestAnimationFrame(function(){ game.run() });
+}
+
+Game.prototype.playerDead = function(player) {
+	alert("s a d")
+
 }
 
 // SOCKETS

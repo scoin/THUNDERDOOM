@@ -1,9 +1,11 @@
 var express = require('express');
+var session = require('cookie-session')
 var router = express.Router();
 
 module.exports = function(io){
   io.on('connection', function(socket){
     console.log('a user connected');
+    io.to(socket.id).emit('getUserId', socket.id);
     socket.on('addPlayer', function(playerData) {
       socket.broadcast.emit('addPlayer', playerData, socket.id);
     })
@@ -14,6 +16,10 @@ module.exports = function(io){
 
     socket.on('projectileShot', function(projectile_init_dict) {
       socket.broadcast.emit('projectileShot', projectile_init_dict)
+    })
+
+    socket.on('projectileHit', function(hitData){
+      socket.broadcast.emit('projectileHit', hitData);
     })
 
     socket.on('disconnect', function(){

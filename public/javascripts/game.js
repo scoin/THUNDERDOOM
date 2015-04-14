@@ -1,5 +1,4 @@
 g_otherPlayers = {} // socket wasn't recognizing it as a class variable
-g_projectiles = []
 
 var Player = function(name, x, y, id){
     this.name = name;
@@ -237,8 +236,8 @@ Game.prototype.drawForeground = function(){
         game.canvas.drawPlayer(g_otherPlayers[i]);
     };
 
-    for(var i in g_projectiles){
-        game.canvas.drawProjectile(g_projectiles[i]);
+    for(var i in game.projectiles){
+        game.canvas.drawProjectile(game.projectiles[i]);
     };
 }
 
@@ -286,12 +285,12 @@ Game.prototype.run = function(){
     window.onmouseup = function(e){
         game.mouseDown = false;
         var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
-        g_projectiles.push(new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id));
+        game.projectiles.push(new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id));
         game.socket.emitProjectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id);
     }
     game.player.chargeUp(game.mouseDown);
-    for(var i in g_projectiles){
-        var projectile = g_projectiles[i];
+    for(var i in game.projectiles){
+        var projectile = game.projectiles[i];
         projectile.move();
         var playerHit = game.player.detectCollision(projectile);
         if(playerHit === true){
@@ -303,7 +302,7 @@ Game.prototype.run = function(){
 					}
 				}
         if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true){
-          g_projectiles.splice(i, 1);
+          game.projectiles.splice(i, 1);
         }
     };
     game.getInput();
@@ -372,9 +371,9 @@ Socket.prototype.emitProjectile = function(xPos, yPos, xEnd, yEnd, speed, pSize,
     })
 }
 
-Socket.prototype.projectileShot = function() {
+Socket.prototype.projectileShot = function(game) {
     g_socket.on('projectileShot', function(p) {
-        g_projectiles.push(new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator))
+        game.projectiles.push(new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator))
     })
 }
 
@@ -385,7 +384,7 @@ Socket.prototype.emitProjectileHit = function(player, projectile){
     })
 }
 
-Socket.prototype.initialize = function(player) {
+Socket.prototype.initialize = function(player, game) {
     this.addPlayer(player);
     g_socket.on('getUserId', function(userId){
         player.id = userId;
@@ -393,7 +392,7 @@ Socket.prototype.initialize = function(player) {
     this.popPlayers();
     this.broadcastPosition(player);
     this.syncPosition();
-    this.projectileShot();
+    this.projectileShot(game);
 }
 
 //I don't like this out of socket prototype, but it needs to change local game state.
@@ -405,10 +404,10 @@ Game.prototype.getProjectileHits = function(){
         var hitPlayer = hitData.player;
         var projectile = hitData.projectile;
         if(projectile.originator === game.player.id){
-            var i = g_projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
-            g_projectiles.splice(i, 1);
+            var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
+            game.projectiles.splice(i, 1);
         }
-        // condition for player in g_otherplayers, remove from g_projectiles bla bla
+        // condition for player in g_otherplayers, remove from game.projectiles bla bla
     })
 }
 
@@ -417,7 +416,7 @@ window.onload = function(){
     var game = new Game();
     game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
     game.socket = new Socket()
-    game.socket.initialize(game.player);
+    game.socket.initialize(game.player, game);
     game.getProjectileHits();
     game.drawBackground();
     game.drawForeground();

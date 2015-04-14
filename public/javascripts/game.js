@@ -403,11 +403,8 @@ Game.prototype.getProjectileHits = function(){
     g_socket.on('projectileHit', function(hitData){
         var hitPlayer = hitData.player;
         var projectile = hitData.projectile;
-        if(projectile.originator === game.player.id){
-            var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
-            game.projectiles.splice(i, 1);
-        }
-        // condition for player in g_otherplayers, remove from game.projectiles bla bla
+        var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
+        game.projectiles.splice(i, 1);
     })
 }
 
@@ -420,6 +417,7 @@ window.onload = function(){
     game.getProjectileHits();
     game.drawBackground();
     game.drawForeground();
+    game.getProjectileHits();
     game.run();
 }
 

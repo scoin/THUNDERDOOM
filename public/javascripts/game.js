@@ -1,5 +1,3 @@
-g_otherPlayers = {} // socket wasn't recognizing it as a class variable
-
 var Player = function(name, x, y, id){
     this.name = name;
     this.id = id;
@@ -134,16 +132,15 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.speed = speed;
     this.xPath = (endX - startX);
     this.yPath = (endY - startY);
-		this.pathAngle = Math.atan((endY - startY)/(endX - startX))
-		console.log(this.pathAngle)
-		if(this.xPath < 0) {
-			this.xInc = -Math.cos(this.pathAngle) * speed;
-	    this.yInc = -Math.sin(this.pathAngle) * speed;
-		}
-		else {
-	    this.xInc = Math.cos(this.pathAngle) * speed;
-			this.yInc = Math.sin(this.pathAngle) * speed;
-		}
+	this.pathAngle = Math.atan((endY - startY)/(endX - startX))
+	if(this.xPath < 0) {
+		this.xInc = -Math.cos(this.pathAngle) * speed;
+        this.yInc = -Math.sin(this.pathAngle) * speed;
+	}
+	else {
+        this.xInc = Math.cos(this.pathAngle) * speed;
+		this.yInc = Math.sin(this.pathAngle) * speed;
+	}
     this.size = size;
     this.width = size;
     this.height = size;
@@ -224,8 +221,8 @@ Game.prototype.drawForeground = function(){
     var game = this;
     game.canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
     game.canvas.drawPlayer(game.player);
-    for(var i in g_otherPlayers){
-        game.canvas.drawPlayer(g_otherPlayers[i]);
+    for(var i in game.otherPlayers){
+        game.canvas.drawPlayer(game.otherPlayers[i]);
     };
 
     for(var i in game.projectiles){
@@ -286,13 +283,9 @@ Game.prototype.run = function(){
         projectile.move();
         var playerHit = game.player.detectCollision(projectile);
         if(playerHit === true){
-					game.player.hp -= projectile.damage
-					game.socketEmitProjectileHit(projectile);
-					// if(game.player.hp <= 0){
-					// 	// game.playerDead(game.player, projectile)
-					// 	// game.player.registerKill()
-					// }
-				}
+			game.player.hp -= projectile.damage
+            game.socketEmitProjectileHit(projectile);
+		}
         if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true){
           game.projectiles.splice(i, 1);
         }
@@ -302,22 +295,6 @@ Game.prototype.run = function(){
     window.requestAnimationFrame(function(){ game.run() });
 }
 
-// Game.prototype.socketPlayerDead = function(player, projectile) {
-// 	var game = this
-// 	game.player.hp += 10
-// 	game.player.respawn(game)
-// 	g_socket.emit('playerDead', {playerId: game.player.id, killerId: projectile.originator})
-// }
-
-// Game.prototype.registerKill = function() {
-//     var player = this;
-//     g_socket.on('playerDead', function(killDict) {
-//         if(player.id === killDict.killerId) {
-//             player.kills += 1
-//         }
-//     })
-// }
-
 // SOCKETS
 
 Game.prototype.socketAddPlayer = function() {
@@ -326,14 +303,14 @@ Game.prototype.socketAddPlayer = function() {
 
     game.socket.on('addPlayer', function(playerData, socketId){
         var p = new Player(playerData.name, playerData.x, playerData.y, socketId);
-        g_otherPlayers[socketId] = p;
+        game.otherPlayers[socketId] = p;
     })
 }
 
 Game.prototype.socketPopPlayers = function(){
     var game = this;
     game.socket.on('popPlayer', function(socketId){
-        delete g_otherPlayers[socketId];
+        delete game.otherPlayers[socketId];
     })
 }
 
@@ -348,13 +325,13 @@ Game.prototype.socketBroadcastPosition = function() {
 Game.prototype.socketSyncPosition = function() {
     var game = this;
     game.socket.on('playerPosition', function(moveInfo, socketId) {
-      if(g_otherPlayers[socketId]){
-        g_otherPlayers[socketId].x = moveInfo.xPos;
-        g_otherPlayers[socketId].y = moveInfo.yPos;
-        g_otherPlayers[socketId].imageDirection = moveInfo.imageDir;
+      if(game.otherPlayers[socketId]){
+        game.otherPlayers[socketId].x = moveInfo.xPos;
+        game.otherPlayers[socketId].y = moveInfo.yPos;
+        game.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
       } else {
         var p = new Player(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
-        g_otherPlayers[socketId] = p;
+        game.otherPlayers[socketId] = p;
       }
     })
 }
@@ -403,7 +380,6 @@ Game.prototype.socketInitialize = function() {
 Game.prototype.socketGetProjectileHits = function(){
     var game = this;
     game.socket.on('projectileHit', function(hitData){
-        console.log(hitData)
         var hitPlayer = hitData.player;
         var projectile = hitData.projectile;
         var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);

@@ -22,6 +22,10 @@ module.exports = function(io){
       socket.broadcast.emit('projectileHit', hitData);
     })
 
+    socket.on('playerDead', function(killDict) {
+      socket.broadcast.emit('playerDead', killDict)
+    })
+
     socket.on('disconnect', function(){
       console.log('user disconnected');
       socket.broadcast.emit('popPlayer', socket.id);

@@ -1,22 +1,4 @@
 g_otherPlayers = {} // socket wasn't recognizing it as a class variable
-g_projectiles = []
-
-function intersection_destructive(a, b)
-{
-  var result = new Array();
-  while( a.length > 0 && b.length > 0 )
-  {  
-     if      (a[0] < b[0] ){ a.shift(); }
-     else if (a[0] > b[0] ){ b.shift(); }
-     else /* they're equal */
-     {
-       result.push(a.shift());
-       b.shift();
-     }
-  }
-
-  return result;
-}
 
 var Player = function(name, x, y, id){
     this.name = name;
@@ -32,6 +14,7 @@ var Player = function(name, x, y, id){
     this.width = 35;
     this.height = 56;
     this.charge = 0;
+		this.hp = 10;
     this.kills = 0;
     this.initImages();
 }
@@ -39,18 +22,18 @@ var Player = function(name, x, y, id){
 Player.prototype.playerData = function(){
     var player = this;
     var data_obj = {
-                    "name": player.name,
-                    "id": player.id,
-                    "x": player.x,
-                    "y": player.y,
-                    "xSpeed": player.xSpeed,
-                    "ySpeed": player.ySpeed,
-                    "xDirection": player.xDirection,
-                    "yDirection": player.yDirection,
-                    "imageDirection": player.imageDirection,
-                    "charge": player.charge,
-                    "kills": player.kills
-                    }
+		    "name": player.name,
+		    "id": player.id,
+		    "x": player.x,
+		    "y": player.y,
+		    "xSpeed": player.xSpeed,
+		    "ySpeed": player.ySpeed,
+		    "xDirection": player.xDirection,
+		    "yDirection": player.yDirection,
+		    "imageDirection": player.imageDirection,
+		    "charge": player.charge,
+		    "kills": player.kills
+    }
     return data_obj;
 }
 
@@ -121,26 +104,37 @@ Player.prototype.chargeUp = function(mouseDown){
 
 Player.prototype.detectCollision = function(obj){
     var player = this;
-    var playerxRange = [];
-    var playeryRange = [];
-    var objxRange = [];
-    var objyRange = [];
-    for(var i = player.x; i<=player.x + player.width; i++){
-        playerxRange.push(i);
-    }
-    for(var i = player.y; i<=player.y + player.height; i++){
-        playeryRange.push(i);
-    }
-    for(var i = obj.x; i<=obj.x + obj.height; i++){
-        objxRange.push(Math.floor(i));
-    }
-    for(var i = obj.y; i<=obj.y + obj.height; i++){
-        objyRange.push(Math.floor(i));
-    }
-    if(intersection_destructive(playerxRange, objxRange).length > 0 && intersection_destructive(playeryRange, objyRange).length > 0){
-        return true;
-    }
+		if(player.id === obj.originator) {
+			return false
+		}
+
+    var playerxRange = [player.x, player.x + player.width];
+    var playeryRange = [player.y, player.y + player.height];
+    var objxRange = [obj.x - (obj.width/2), obj.x + (obj.width/2)];
+    var objyRange = [obj.y - (obj.height/2), obj.y + (obj.height/2)];
+		// compares bounds of player and proj
+		if((playerxRange[0] <= objxRange[1] && playerxRange[1] >= objxRange[0])
+		&& (playeryRange[0] <= objyRange[1] && playeryRange[1] >= objyRange[0])) {
+			return true
+		}
     return false;
+}
+
+Player.prototype.respawn = function(game) {
+	var player = this;
+	setTimeout(function() {
+		player.x = Math.floor((Math.random() * (game.canvas.width - 50)))
+		player.y = Math.floor((Math.random() * (game.canvas.height - 50)))
+	}, 1000)
+}
+
+Player.prototype.registerKill = function() {
+	var player = this;
+	g_socket.on('playerDead', function(killDict) {
+		if(player.id === killDict.killerId) {
+			player.kills += 1
+		}
+	})
 }
 
 var Projectile = function(startX, startY, endX, endY, speed, size, originator){
@@ -149,31 +143,40 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.speed = speed;
     this.xPath = (endX - startX);
     this.yPath = (endY - startY);
-    this.xInc = Math.floor(this.xPath / speed);
-    this.yInc = Math.floor(this.yPath / speed);
+		this.pathAngle = Math.atan((endY - startY)/(endX - startX))
+		console.log(this.pathAngle)
+		if(this.xPath < 0) {
+			this.xInc = -Math.cos(this.pathAngle) * speed;
+	    this.yInc = -Math.sin(this.pathAngle) * speed;
+		}
+		else {
+	    this.xInc = Math.cos(this.pathAngle) * speed;
+			this.yInc = Math.sin(this.pathAngle) * speed;
+		}
     this.size = size;
     this.width = size;
     this.height = size;
     this.originator = originator;
+		this.damage = 5;
     this.id = Math.random() * 10000;
 }
 
 Projectile.prototype.projectileData = function(){
     var projectile = this;
     var data_obj = {
-            "x": projectile.x,
-            "y": projectile.y,
-            "speed": projectile.speed,
-            "xPath": projectile.xPath,
-            "yPath" : projectile.yPath,
-            "xInc" : projectile.xInc,
-            "yInc" : projectile.yInc, 
-            "size" : projectile.size,
-            "width" : projectile.width,
-            "height" : projectile.height,
-            "originator" : projectile.originator,
-            "id": projectile.id
-        }
+	    "x": projectile.x,
+	    "y": projectile.y,
+	    "speed": projectile.speed,
+	    "xPath": projectile.xPath,
+	    "yPath" : projectile.yPath,
+	    "xInc" : projectile.xInc,
+	    "yInc" : projectile.yInc,
+	    "size" : projectile.size,
+	    "width" : projectile.width,
+	    "height" : projectile.height,
+	    "originator" : projectile.originator,
+	    "id": projectile.id
+    }
     return data_obj;
 }
 
@@ -216,10 +219,10 @@ var Game = function(){
     this.otherPlayers = [];
     this.projectiles = [];
     this.controls = {
-        "W": "up",
-        "S": "down",
-        "A": "left",
-        "D": "right"
+      "W": "up",
+      "S": "down",
+      "A": "left",
+      "D": "right"
     }
     this.keysDown = {};
     this.mouseDown = false;
@@ -235,10 +238,6 @@ Game.prototype.drawForeground = function(){
 
     for(var i in game.projectiles){
         game.canvas.drawProjectile(game.projectiles[i]);
-    };
-    // projectiles from socket
-    for(var i in g_projectiles){
-        game.canvas.drawProjectile(g_projectiles[i]);
     };
 }
 
@@ -293,22 +292,29 @@ Game.prototype.run = function(){
     for(var i in game.projectiles){
         var projectile = game.projectiles[i];
         projectile.move();
-        if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height){
-            game.projectiles.splice(i, 1);
-        }
-    };
-    for(var i in g_projectiles){
-        var projectile = g_projectiles[i];
-        projectile.move();
         var playerHit = game.player.detectCollision(projectile);
-        if(playerHit === true){ game.socket.emitProjectileHit(game.player, projectile) }
+        if(playerHit === true){
+					game.player.hp -= projectile.damage
+					game.socket.emitProjectileHit(game.player, projectile)
+					if(game.player.hp <= 0){
+						game.playerDead(game.player, projectile)
+						game.player.registerKill()
+					}
+				}
         if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true){
-            g_projectiles.splice(i, 1);
+          game.projectiles.splice(i, 1);
         }
     };
     game.getInput();
     game.drawForeground();
     window.requestAnimationFrame(function(){ game.run() });
+}
+
+Game.prototype.playerDead = function(player, projectile) {
+	var game = this
+	game.player.hp += 10
+	game.player.respawn(game)
+	g_socket.emit('playerDead', {playerId: player.id, killerId: projectile.originator})
 }
 
 // SOCKETS
@@ -336,7 +342,7 @@ Socket.prototype.popPlayers = function(){
 Socket.prototype.broadcastPosition = function(player) {
   setInterval(function() {
     g_socket.emit('playerPosition', {
-            name: player.name, id: player.id, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
+      name: player.name, id: player.id, xPos: player.x, yPos: player.y, imageDir: player.imageDirection})
   }, 15)
 }
 
@@ -365,9 +371,9 @@ Socket.prototype.emitProjectile = function(xPos, yPos, xEnd, yEnd, speed, pSize,
     })
 }
 
-Socket.prototype.projectileShot = function() {
+Socket.prototype.projectileShot = function(game) {
     g_socket.on('projectileShot', function(p) {
-        g_projectiles.push(new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator))
+        game.projectiles.push(new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator))
     })
 }
 
@@ -378,7 +384,7 @@ Socket.prototype.emitProjectileHit = function(player, projectile){
     })
 }
 
-Socket.prototype.initialize = function(player) {
+Socket.prototype.initialize = function(player, game) {
     this.addPlayer(player);
     g_socket.on('getUserId', function(userId){
         player.id = userId;
@@ -386,10 +392,10 @@ Socket.prototype.initialize = function(player) {
     this.popPlayers();
     this.broadcastPosition(player);
     this.syncPosition();
-    this.projectileShot();
+    this.projectileShot(game);
 }
 
-//I don't like this out of socket prototype, but it needs to change local game state. 
+//I don't like this out of socket prototype, but it needs to change local game state.
 // Need to rework game / sockets OO more, can maybe fix global players / projectiles
 
 Game.prototype.getProjectileHits = function(){
@@ -401,7 +407,7 @@ Game.prototype.getProjectileHits = function(){
             var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
             game.projectiles.splice(i, 1);
         }
-        // condition for player in g_otherplayers, remove from g_projectiles bla bla
+        // condition for player in g_otherplayers, remove from game.projectiles bla bla
     })
 }
 
@@ -410,7 +416,7 @@ window.onload = function(){
     var game = new Game();
     game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
     game.socket = new Socket()
-    game.socket.initialize(game.player);
+    game.socket.initialize(game.player, game);
     game.getProjectileHits();
     game.drawBackground();
     game.drawForeground();

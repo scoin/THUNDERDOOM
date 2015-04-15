@@ -1,22 +1,3 @@
-Player.prototype.detectCollision = function(obj){
-    var player = this;
-		if(player.id === obj.originator) {
-			return false
-		}
-
-    var playerxRange = [player.x, player.x + player.width];
-    var playeryRange = [player.y, player.y + player.height];
-    var objxRange = [obj.x - (obj.width/2), obj.x + (obj.width/2)];
-    var objyRange = [obj.y - (obj.height/2), obj.y + (obj.height/2)];
-		// compares bounds of player and proj
-		if((playerxRange[0] <= objxRange[1] && playerxRange[1] >= objxRange[0])
-		&& (playeryRange[0] <= objyRange[1] && playeryRange[1] >= objyRange[0])) {
-			return true
-		}
-    return false;
-}
-
-
 var Game = function(){
     this.canvas = new Canvas();
     this.socket = io();
@@ -72,6 +53,24 @@ Game.prototype.getInput = function(){
   game.player.move(game.keysDown);
 }
 
+Game.prototype.detectCollision = function(objOne, objTwo){
+    var player = this;
+		if(objOne.id === objTwo.originator) {
+			return false
+		}
+
+    var objOneXRange = [objOne.x, objOne.x + objOne.width];
+    var objOneYRange = [objOne.y, objOne.y + objOne.height];
+    var objTwoXRange = [objTwo.x - (objTwo.width/2), objTwo.x + (objTwo.width/2)];
+    var objTwoYRange = [objTwo.y - (objTwo.height/2), objTwo.y + (objTwo.height/2)];
+		// compares bounds
+		if((objOneXRange[0] <= objTwoXRange[1] && objOneXRange[1] >= objTwoXRange[0])
+		&& (objOneYRange[0] <= objTwoYRange[1] && objOneYRange[1] >= objTwoYRange[0])) {
+			return true
+		}
+    return false;
+}
+
 Game.prototype.run = function(){
   var game = this;
   setInterval(function(){
@@ -99,7 +98,7 @@ Game.prototype.run = function(){
       var projectile = game.projectiles[i];
       projectile.move();
 
-      var playerHit = game.player.detectCollision(projectile);
+      var playerHit = game.detectCollision(game.player, projectile);
       if(playerHit === true){
   			game.player.hp -= projectile.damage
         game.socketEmitProjectileHit(projectile);
@@ -142,7 +141,11 @@ Game.prototype.socketBroadcastPosition = function() {
   var game = this;
   setInterval(function() {
     game.socket.emit('playerPosition', {
-      name: game.player.name, id: game.player.id, xPos: game.player.x, yPos: game.player.y, imageDir: game.player.imageDirection})
+      "name": game.player.name,
+      "id": game.player.id,
+      "xPos": game.player.x,
+      "yPos": game.player.y,
+      "imageDir": game.player.imageDirection})
   }, 15)
 }
 

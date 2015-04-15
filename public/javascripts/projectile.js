@@ -41,7 +41,7 @@ Projectile.prototype.projectileData = function(){
 }
 
 Projectile.prototype.move = function(){
-    var projectile = this;
-    projectile.x += projectile.xInc;
-    projectile.y += projectile.yInc;
+  var projectile = this;
+  projectile.x += projectile.xInc;
+  projectile.y += projectile.yInc;
 }

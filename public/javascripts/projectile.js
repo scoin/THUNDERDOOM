@@ -4,21 +4,21 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
     this.speed = speed;
     this.xPath = (endX - startX);
     this.yPath = (endY - startY);
-	this.pathAngle = Math.atan((endY - startY)/(endX - startX))
-	if(this.xPath < 0) {
+    this.pathAngle = Math.atan((endY - startY)/(endX - startX))
+	if(this.xPath < 0){
 		this.xInc = -Math.cos(this.pathAngle) * speed;
-        this.yInc = -Math.sin(this.pathAngle) * speed;
+    this.yInc = -Math.sin(this.pathAngle) * speed;
 	}
-	else {
-        this.xInc = Math.cos(this.pathAngle) * speed;
+	else{
+    this.xInc = Math.cos(this.pathAngle) * speed;
 		this.yInc = Math.sin(this.pathAngle) * speed;
 	}
-    this.size = size;
-    this.width = size;
-    this.height = size;
-    this.originator = originator;
+  this.size = size;
+  this.width = size;
+  this.height = size;
+  this.originator = originator;
 	this.damage = 5;
-    this.id = Math.random() * 10000;
+  this.id = Math.random() * 10000;
 }
 
 Projectile.prototype.projectileData = function(){

@@ -1,10 +1,10 @@
 var Projectile = function(startX, startY, endX, endY, speed, size, originator){
-    this.x = startX;
-    this.y = startY;
-    this.speed = speed;
-    this.xPath = (endX - startX);
-    this.yPath = (endY - startY);
-    this.pathAngle = Math.atan((endY - startY)/(endX - startX))
+  this.x = startX;
+  this.y = startY;
+  this.speed = speed;
+  this.xPath = (endX - startX);
+  this.yPath = (endY - startY);
+  this.pathAngle = Math.atan((endY - startY)/(endX - startX))
 	if(this.xPath < 0){
 		this.xInc = -Math.cos(this.pathAngle) * speed;
     this.yInc = -Math.sin(this.pathAngle) * speed;

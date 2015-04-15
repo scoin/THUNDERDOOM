@@ -3,7 +3,7 @@ var Game = function(){
     this.socket = io();
     this.player = undefined;
     this.otherPlayers = [];
-    this.projectiles = [];
+    this.projectiles = {};
     this.controls = {
       "W": "up",
       "S": "down",
@@ -90,7 +90,8 @@ Game.prototype.run = function(){
     window.onmouseup = function(e){
       game.mouseDown = false;
       var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
-      game.projectiles.push(new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id));
+      var p = new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id)
+      game.projectiles[p.id] = p;
       game.socketEmitProjectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id);
     }
     game.player.chargeUp(game.mouseDown);
@@ -105,7 +106,7 @@ Game.prototype.run = function(){
 		  }
 
       if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true){
-        game.projectiles.splice(i, 1);
+        delete game.projectiles[i];
       }
     };
     game.getInput();
@@ -179,7 +180,8 @@ Game.prototype.socketEmitProjectile = function(xPos, yPos, xEnd, yEnd, speed, pS
 Game.prototype.socketProjectileShot = function() {
   var game = this;
   game.socket.on('projectileShot', function(p) {
-    game.projectiles.push(new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator))
+    var p = new Projectile(p.startX, p.startY, p.endX, p.endY, p.speed, p.size, p.originator)
+    game.projectiles[p.id] = p
   })
 }
 

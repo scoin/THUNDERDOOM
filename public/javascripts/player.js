@@ -38,68 +38,68 @@ Player.prototype.playerData = function(){
 }
 
 Player.prototype.initImages = function(){
-    var player = this;
-    var sprites = ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"];
-    for(var i in sprites){
-        var img = new Image();
-        img.src = sprites[i];
-        player.images.push(img);
-    }
+  var player = this;
+  var sprites = ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"];
+  for(var i in sprites){
+    var img = new Image();
+    img.src = sprites[i];
+    player.images.push(img);
+  }
 }
 
 Player.prototype.setDirection = function(clientX, clientY){
-    var player = this;
-    if(clientY < player.y){
-        player.yDirection = -1;
-        if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
-            player.imageDirection = 0;
-            player.xDirection = 0;
-        } else if(clientX > player.x){
-            player.imageDirection = 1;
-            player.xDirection = 1;
-        } else if(clientX < player.x){
-            player.imageDirection = 7;
-            player.xDirection = -1;
-        }
-    } else if(clientY >= (player.y - player.height * 2) && clientY <= (player.y + player.height * 2)){
-        player.yDirection = 0;
-        if(clientX > player.x){
-            player.imageDirection = 2;
-            player.xDirection = 1;
-        } else if(clientX < player.x){
-            player.imageDirection = 6;
-            player.xDirection = -1;
-        }
-    } else if(clientY > player.y){
-        player.yDirection = 1;
-        if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
-            player.imageDirection = 4;
-            player.xDirection = 0;
-        } else if(clientX > player.x){
-            player.imageDirection = 3;
-            player.xDirection = 1;
-        } else if(clientX < player.x){
-            player.imageDirection = 5;
-            player.xDirection = -1;
-        }
+  var player = this;
+  if(clientY < player.y){
+    player.yDirection = -1;
+    if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
+      player.imageDirection = 0;
+      player.xDirection = 0;
+    } else if(clientX > player.x){
+      player.imageDirection = 1;
+      player.xDirection = 1;
+    } else if(clientX < player.x){
+      player.imageDirection = 7;
+      player.xDirection = -1;
     }
+  } else if(clientY >= (player.y - player.height * 2) && clientY <= (player.y + player.height * 2)){
+    player.yDirection = 0;
+    if(clientX > player.x){
+      player.imageDirection = 2;
+      player.xDirection = 1;
+    } else if(clientX < player.x){
+      player.imageDirection = 6;
+      player.xDirection = -1;
+    }
+  } else if(clientY > player.y){
+    player.yDirection = 1;
+    if(clientX >= player.x - (player.width * 4) && clientX <= player.x + (player.width * 4)){
+      player.imageDirection = 4;
+      player.xDirection = 0;
+    } else if(clientX > player.x){
+      player.imageDirection = 3;
+      player.xDirection = 1;
+    } else if(clientX < player.x){
+      player.imageDirection = 5;
+      player.xDirection = -1;
+    }
+  }
 }
 
 Player.prototype.move = function(keysDown){
-    var player = this;
-    if("up" in keysDown) player.yDirection == -1 ? player.y = player.y - player.ySpeed : player.y = player.y - (player.ySpeed / 2);
-    if("down" in keysDown) player.yDirection == 1 ? player.y = player.y + player.ySpeed : player.y = player.y + (player.ySpeed / 2);
-    if("left" in keysDown) player.xDirection == -1 ? player.x = player.x - player.xSpeed : player.x = player.x - (player.xSpeed / 2);
-    if("right" in keysDown) player.xDirection == 1 ? player.x = player.x + player.xSpeed : player.x = player.x + (player.xSpeed / 2);
+  var player = this;
+  if("up" in keysDown) player.yDirection == -1 ? player.y = player.y - player.ySpeed : player.y = player.y - (player.ySpeed / 2);
+  if("down" in keysDown) player.yDirection == 1 ? player.y = player.y + player.ySpeed : player.y = player.y + (player.ySpeed / 2);
+  if("left" in keysDown) player.xDirection == -1 ? player.x = player.x - player.xSpeed : player.x = player.x - (player.xSpeed / 2);
+  if("right" in keysDown) player.xDirection == 1 ? player.x = player.x + player.xSpeed : player.x = player.x + (player.xSpeed / 2);
 }
 
 Player.prototype.chargeUp = function(mouseDown){
-    var player = this;
-    if(mouseDown === true){
-        if(player.charge < 150) player.charge += 1;
-    } else {
-        player.charge = 0;
-    }
+  var player = this;
+  if(mouseDown === true){
+    if(player.charge < 150) player.charge += 1;
+  } else {
+    player.charge = 0;
+  }
 }
 
 

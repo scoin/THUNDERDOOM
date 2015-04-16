@@ -130,15 +130,6 @@ Game.prototype.renderGraphics = function(){
 
 // SOCKETS
 
-Game.prototype.socketAddPlayer = function() {
-  var game = this;
-  game.socket.emit('addPlayer', game.player.playerData());
-
-  game.socket.on('addPlayer', function(playerData, socketId){
-    var p = new Player(playerData.name, playerData.x, playerData.y, socketId);
-    game.otherPlayers[socketId] = p;
-  })
-}
 
 Game.prototype.socketPopPlayers = function(){
   var game = this;
@@ -196,7 +187,7 @@ Game.prototype.socketEmitProjectileHit = function(projectile){
 
 Game.prototype.socketInitialize = function() {
   var game = this;
-  game.socketAddPlayer();
+  // game.socketAddPlayer();
   game.socket.on('getUserId', function(userId){
     game.player.id = userId;
   })
@@ -220,6 +211,7 @@ window.onload = function(){
   var name = prompt("Enter a badass wizard name");
   var game = new Game();
   game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
+  var gameWorker = new Worker('javascripts/gameWorker.js')
   game.socketInitialize();
   game.socketGetProjectileHits();
   game.run();

@@ -7,6 +7,7 @@ module.exports = function(io){
     console.log('a user connected');
     io.to(socket.id).emit('getUserId', socket.id);
     socket.on('addPlayer', function(playerData) {
+      console.log("dicks")
       socket.broadcast.emit('addPlayer', playerData, socket.id);
     })
 

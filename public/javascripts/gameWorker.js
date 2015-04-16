@@ -15,7 +15,6 @@ var Player = function(name, x, y, id){
     this.charge = 0;
 		this.hp = 10;
     this.kills = 0;
-    // this.initImages();
 }
 
 Player.prototype.playerData = function(){
@@ -36,8 +35,7 @@ Player.prototype.playerData = function(){
 }
 
 var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
-  this.x = startX;
-  this.y = startY;
+  this.coord = {"x": startX, "y": startY}
   this.speed = speed;
   this.endX = endX;
   this.endY = endY;
@@ -66,8 +64,7 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator, i
 Projectile.prototype.projectileData = function(){
     var projectile = this;
     var data_obj = {
-	    "x": projectile.x,
-	    "y": projectile.y,
+	    "coords": projectile.coords,
 	    "speed": projectile.speed,
 	    "endX": projectile.endX,
 	    "endY" : projectile.endY,
@@ -84,8 +81,8 @@ Projectile.prototype.projectileData = function(){
 
 Projectile.prototype.move = function(){
   var projectile = this;
-  projectile.x += projectile.xInc;
-  projectile.y += projectile.yInc;
+  projectile.coords.x += projectile.xInc;
+  projectile.coords.y += projectile.yInc;
 }
 
 var GameWorker = function(){
@@ -109,10 +106,10 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
 			return false
 		}
 
-    var objOneXRange = [objOne.x, objOne.x + objOne.width];
-    var objOneYRange = [objOne.y, objOne.y + objOne.height];
-    var objTwoXRange = [objTwo.x - (objTwo.width/2), objTwo.x + (objTwo.width/2)];
-    var objTwoYRange = [objTwo.y - (objTwo.height/2), objTwo.y + (objTwo.height/2)];
+    var objOneXRange = [objOne.coords.x, objOne.coords.x + objOne.width];
+    var objOneYRange = [objOne.coords.y, objOne.coords.y + objOne.height];
+    var objTwoXRange = [objTwo.coords.x - (objTwo.width/2), objTwo.coords.x + (objTwo.width/2)];
+    var objTwoYRange = [objTwo.coords.y - (objTwo.height/2), objTwo.coords.y + (objTwo.height/2)];
 		// compares bounds
     if((objOneXRange[0] <= objTwoXRange[1] && objOneXRange[1] >= objTwoXRange[0])
 		&& (objOneYRange[0] <= objTwoYRange[1] && objOneYRange[1] >= objTwoYRange[0])) {
@@ -139,7 +136,7 @@ GameWorker.prototype.run = function(){
     window.onmouseup = function(e){
       game.mouseDown = false;
       var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
-      var p = new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id)
+      var p = new Projectile(game.player.coords.x + (game.player.width / 2), game.player.coords.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id)
       game.projectiles[p.id] = p;
       game.socketEmitProjectile(p);
     }
@@ -161,7 +158,7 @@ GameWorker.prototype.run = function(){
           break
         }
       }
-      if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true || otherPlayerHit === true){
+      if(projectile.coords.x < 0 || projectile.coords.x > game.canvas.width || projectile.coords.y < 0 || projectile.coords.y > game.canvas.height || playerHit === true || otherPlayerHit === true){
         projectileIdToDelete = projectile.id
       }
     };
@@ -174,16 +171,16 @@ GameWorker.prototype.run = function(){
 
 GameWorker.prototype.getInput = function(){
   var game = this;
-  if(game.player.x <= 0){
+  if(game.player.coords.x <= 0){
     delete game.keysDown['left'];
   }
-  if(game.player.x + game.player.width >= game.canvas.width){
+  if(game.player.coords.x + game.player.width >= game.canvas.width){
     delete game.keysDown['right'];
   }
-  if(game.player.y <= 0){
+  if(game.player.coords.y <= 0){
     delete game.keysDown['up'];
   }
-  if(game.player.y + game.player.height >= game.canvas.height){
+  if(game.player.coords.y + game.player.height >= game.canvas.height){
     delete game.keysDown['down'];
   }
   game.player.move(game.keysDown);
@@ -211,8 +208,8 @@ GameWorker.prototype.socketBroadcastPosition = function() {
     game.socket.emit('playerPosition', {
       "name": game.player.name,
       "id": game.player.id,
-      "xPos": game.player.x,
-      "yPos": game.player.y,
+      "xPos": game.player.coords.x,
+      "yPos": game.player.coords.y,
       "imageDir": game.player.imageDirection})
   }, 15)
 }
@@ -293,6 +290,7 @@ GameWorker.prototype.communicateWithClient = function(){
 GameWorker.prototype.init = function(){
 
 }
+
 var gameWorker = new GameWorker()
 gameWorker.communicateWithClient()
 setTimeout(function(){

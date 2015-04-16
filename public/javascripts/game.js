@@ -11,6 +11,8 @@ var Game = function(){
     }
     this.keysDown = {};
     this.mouseDown = false;
+    this.gameWorker = new Worker('javascripts/gameWorker.js')
+
 }
 
 Game.prototype.drawForeground = function(){
@@ -59,6 +61,8 @@ Game.prototype.renderGraphics = function(){
 }
 
 Game.prototype.communicateWithWorker = function(){
+  var game = this;
+  game.gameWorker.postMessage({"player": game.player.playerData()})
 
 }
 
@@ -66,9 +70,7 @@ window.onload = function(){
   var name = prompt("Enter a badass wizard name");
   var game = new Game();
   game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
-  var gameWorker = new Worker('javascripts/gameWorker.js')
-  gameWorker.postMessage({"player": game.player.playerData()})
-
+  game.communicateWithWorker()
   window.requestAnimationFrame(function render(){
     game.renderGraphics();
     window.requestAnimationFrame(render)

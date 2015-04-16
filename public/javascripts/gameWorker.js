@@ -3,8 +3,6 @@ importScripts('https://cdn.socket.io/socket.io-1.2.0.js')
 var Player = function(name, x, y, id){
     this.name = name;
     this.id = id;
-    this.x = x;
-    this.y = y;
 		this.coord = {"x": x, "y": y};
     this.xSpeed = 2;
     this.ySpeed = 2;
@@ -17,7 +15,7 @@ var Player = function(name, x, y, id){
     this.charge = 0;
 		this.hp = 10;
     this.kills = 0;
-    this.initImages();
+    // this.initImages();
 }
 
 Player.prototype.playerData = function(){
@@ -25,8 +23,6 @@ Player.prototype.playerData = function(){
   var playerData = {
     "name": player.name,
     "id": player.id,
-    "x": player.x,
-    "y": player.y,
 		"coord": player.coord,
     "xSpeed": player.xSpeed,
     "ySpeed": player.ySpeed,
@@ -39,8 +35,60 @@ Player.prototype.playerData = function(){
   return playerData;
 }
 
-var Game = function(){
-  this.canvas = new Canvas();
+var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
+  this.x = startX;
+  this.y = startY;
+  this.speed = speed;
+  this.endX = endX;
+  this.endY = endY;
+  this.pathAngle = Math.atan((endY - startY)/(endX - startX))
+	if((endX - startX) < 0){
+		this.xInc = -Math.cos(this.pathAngle) * speed;
+    this.yInc = -Math.sin(this.pathAngle) * speed;
+	}
+	else{
+    this.xInc = Math.cos(this.pathAngle) * speed;
+		this.yInc = Math.sin(this.pathAngle) * speed;
+	}
+  this.size = size;
+  this.width = size;
+  this.height = size;
+  this.originator = originator;
+	this.damage = 5;
+  if(id){
+    this.id = id
+  }
+  else{
+    this.id = Math.floor(Math.random() * 10000);
+  }
+}
+
+Projectile.prototype.projectileData = function(){
+    var projectile = this;
+    var data_obj = {
+	    "x": projectile.x,
+	    "y": projectile.y,
+	    "speed": projectile.speed,
+	    "endX": projectile.endX,
+	    "endY" : projectile.endY,
+	    "xInc" : projectile.xInc,
+	    "yInc" : projectile.yInc,
+	    "size" : projectile.size,
+	    "width" : projectile.width,
+	    "height" : projectile.height,
+	    "originator" : projectile.originator,
+	    "id": projectile.id
+    }
+    return data_obj;
+}
+
+Projectile.prototype.move = function(){
+  var projectile = this;
+  projectile.x += projectile.xInc;
+  projectile.y += projectile.yInc;
+}
+
+var GameWorker = function(){
   this.socket = io();
   this.player = undefined;
   this.otherPlayers = [];
@@ -55,7 +103,7 @@ var Game = function(){
   this.mouseDown = false;
 }
 
-Game.prototype.detectCollision = function(objOne, objTwo){
+GameWorker.prototype.detectCollision = function(objOne, objTwo){
     var player = this;
 		if(objOne.id === objTwo.originator) {
 			return false
@@ -73,7 +121,7 @@ Game.prototype.detectCollision = function(objOne, objTwo){
     return false;
 }
 
-Game.prototype.run = function(){
+GameWorker.prototype.run = function(){
   var game = this;
   setInterval(function(){
     window.onkeydown = function(e){
@@ -124,7 +172,7 @@ Game.prototype.run = function(){
   }, 15)
 }
 
-Game.prototype.getInput = function(){
+GameWorker.prototype.getInput = function(){
   var game = this;
   if(game.player.x <= 0){
     delete game.keysDown['left'];
@@ -141,7 +189,7 @@ Game.prototype.getInput = function(){
   game.player.move(game.keysDown);
 }
 // Sockets
-Game.prototype.socketAddPlayer = function(){
+GameWorker.prototype.socketAddPlayer = function(){
   game.socket.emit('addPlayer', game.player.playerData());
 
   socket.on('addPlayer', function(playerData, socketId){
@@ -150,14 +198,14 @@ Game.prototype.socketAddPlayer = function(){
   })
 }
 
-Game.prototype.socketPopPlayers = function(){
+GameWorker.prototype.socketPopPlayers = function(){
   var game = this;
   game.socket.on('popPlayer', function(socketId){
     delete game.otherPlayers[socketId];
   })
 }
 
-Game.prototype.socketBroadcastPosition = function() {
+GameWorker.prototype.socketBroadcastPosition = function() {
   var game = this;
   setInterval(function() {
     game.socket.emit('playerPosition', {
@@ -169,7 +217,7 @@ Game.prototype.socketBroadcastPosition = function() {
   }, 15)
 }
 
-Game.prototype.socketSyncPosition = function() {
+GameWorker.prototype.socketSyncPosition = function() {
   var game = this;
   game.socket.on('playerPosition', function(moveInfo, socketId) {
     if(game.otherPlayers[socketId]){
@@ -183,12 +231,12 @@ Game.prototype.socketSyncPosition = function() {
   })
 }
 
-Game.prototype.socketEmitProjectile = function(projectile) {
+GameWorker.prototype.socketEmitProjectile = function(projectile) {
   var game = this;
   game.socket.emit('projectileShot', projectile.projectileData())
 }
 
-Game.prototype.socketProjectileShot = function() {
+GameWorker.prototype.socketProjectileShot = function() {
   var game = this;
   game.socket.on('projectileShot', function(p) {
     var projectile = new Projectile(p.x, p.y, p.endX, p.endY, p.speed, p.size, p.originator, p.id)
@@ -196,7 +244,7 @@ Game.prototype.socketProjectileShot = function() {
   })
 }
 
-Game.prototype.socketEmitProjectileHit = function(projectile){
+GameWorker.prototype.socketEmitProjectileHit = function(projectile){
   var game = this;
   game.socket.emit('projectileHit', {
     "player": game.player.playerData(),
@@ -204,7 +252,7 @@ Game.prototype.socketEmitProjectileHit = function(projectile){
   })
 }
 
-Game.prototype.socketInitialize = function() {
+GameWorker.prototype.socketInitialize = function() {
   var game = this;
   game.socketAddPlayer();
   game.socket.on('getUserId', function(userId){
@@ -217,7 +265,7 @@ Game.prototype.socketInitialize = function() {
   game.socketGetProjectileHits();
 }
 
-Game.prototype.socketGetProjectileHits = function(){
+GameWorker.prototype.socketGetProjectileHits = function(){
   var game = this;
   game.socket.on('projectileHit', function(hitData){
     var hitPlayer = hitData.player;
@@ -225,3 +273,27 @@ Game.prototype.socketGetProjectileHits = function(){
     delete game.projectiles[projectile.id]
   })
 }
+
+GameWorker.prototype.communicateWithClient = function(){
+  var gameWorker = this;
+  gameWorker.player = new Player()
+  gameWorker.socket.on('getUserId', function(userId){
+    gameWorker.player.id = userId;
+  })
+  self.onmessage = function(e){
+    if(e.data.player){
+      var p = e.data.player
+      gameWorker.player.name = p.name
+      gameWorker.player.coord.x = p.coord.x
+      gameWorker.player.coord.y = p.coord.y
+    }
+  }
+}
+
+GameWorker.prototype.init = function(){
+
+}
+var gameWorker = new GameWorker()
+gameWorker.communicateWithClient()
+setTimeout(function(){
+  console.log(gameWorker.player)}, 30)

@@ -1,6 +1,7 @@
 var Game = function(){
     this.canvas = new Canvas();
-    this.players = {};
+    this.player = undefined;
+    this.otherPlayers = [];
     this.projectiles = {};
     this.controls = {
       "W": "up",
@@ -16,8 +17,8 @@ Game.prototype.drawForeground = function(){
   var game = this;
   game.canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
   game.canvas.drawPlayer(game.player);
-  for(var i in game.players){
-    game.canvas.drawPlayer(game.players[i]);
+  for(var i in game.otherPlayers){
+    game.canvas.drawPlayer(game.otherPlayers[i]);
   };
 
   for(var i in game.projectiles){
@@ -57,14 +58,17 @@ Game.prototype.renderGraphics = function(){
   game.drawForeground();
 }
 
+Game.prototype.communicateWithWorker = function(){
+
+}
+
 window.onload = function(){
   var name = prompt("Enter a badass wizard name");
   var game = new Game();
   game.player = new Player(name, Math.floor((Math.random() * (game.canvas.width - 50))), Math.floor((Math.random() * (game.canvas.height - 50))));
   var gameWorker = new Worker('javascripts/gameWorker.js')
-  game.socketInitialize();
-  game.socketGetProjectileHits();
-  game.run();
+  gameWorker.postMessage({"player": game.player.playerData()})
+
   window.requestAnimationFrame(function render(){
     game.renderGraphics();
     window.requestAnimationFrame(render)

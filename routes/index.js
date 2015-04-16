@@ -14,8 +14,8 @@ module.exports = function(io){
       socket.broadcast.emit('playerPosition', moveInfo, socket.id);
     })
 
-    socket.on('projectileShot', function(projectile_init_dict) {
-      socket.broadcast.emit('projectileShot', projectile_init_dict)
+    socket.on('projectileShot', function(projectile_dict) {
+      socket.broadcast.emit('projectileShot', projectile_dict)
     })
 
     socket.on('projectileHit', function(hitData){

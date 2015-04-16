@@ -74,7 +74,6 @@ Game.prototype.detectCollision = function(objOne, objTwo){
 Game.prototype.run = function(){
   var game = this;
   setInterval(function(){
-    game.player.setDirection();
     window.onkeydown = function(e){
       game.keysDown[game.controls[String.fromCharCode(e.which)]] = true;
     }

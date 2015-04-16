@@ -1,6 +1,5 @@
 var Game = function(){
     this.canvas = new Canvas();
-    this.socket = io();
     this.player = undefined;
     this.otherPlayers = [];
     this.projectiles = {};
@@ -12,6 +11,8 @@ var Game = function(){
     }
     this.keysDown = {};
     this.mouseDown = false;
+    this.gameWorker = new Worker('javascripts/gameWorker.js')
+
 }
 
 Game.prototype.drawForeground = function(){
@@ -53,157 +54,15 @@ Game.prototype.getInput = function(){
   game.player.move(game.keysDown);
 }
 
-Game.prototype.detectCollision = function(objOne, objTwo){
-    var player = this;
-		if(objOne.id === objTwo.originator) {
-			return false
-		}
-
-    var objOneXRange = [objOne.x, objOne.x + objOne.width];
-    var objOneYRange = [objOne.y, objOne.y + objOne.height];
-    var objTwoXRange = [objTwo.x - (objTwo.width/2), objTwo.x + (objTwo.width/2)];
-    var objTwoYRange = [objTwo.y - (objTwo.height/2), objTwo.y + (objTwo.height/2)];
-		// compares bounds
-    if((objOneXRange[0] <= objTwoXRange[1] && objOneXRange[1] >= objTwoXRange[0])
-		&& (objOneYRange[0] <= objTwoYRange[1] && objOneYRange[1] >= objTwoYRange[0])) {
-			return true
-		}
-    return false;
-}
-
-Game.prototype.run = function(){
-  var game = this;
-  setInterval(function(){
-    window.onkeydown = function(e){
-      game.keysDown[game.controls[String.fromCharCode(e.which)]] = true;
-    }
-    window.onkeyup = function(e){
-      delete game.keysDown[game.controls[String.fromCharCode(e.which)]];
-    }
-    window.onmousemove = function(e){
-      game.player.setDirection(e.clientX, e.clientY);
-    }
-    window.onmousedown = function(e){
-      game.mouseDown = true;
-    }
-    window.onmouseup = function(e){
-      game.mouseDown = false;
-      var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
-      var p = new Projectile(game.player.x + (game.player.width / 2), game.player.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id)
-      game.projectiles[p.id] = p;
-      game.socketEmitProjectile(p);
-    }
-    game.player.chargeUp(game.mouseDown);
-    var projectileIdToDelete
-    for(var i in game.projectiles){
-      var projectile = game.projectiles[i];
-      projectile.move();
-      var playerHit = game.detectCollision(game.player, projectile);
-      if(playerHit === true){
-  			game.player.hp -= projectile.damage
-        game.socketEmitProjectileHit(projectile);
-		  }
-
-      var otherPlayerHit = false
-      for(i in game.otherPlayers){
-        if(game.detectCollision(game.otherPlayers[i], projectile) === true){
-          otherPlayerHit = true
-          break
-        }
-      }
-      if(projectile.x < 0 || projectile.x > game.canvas.width || projectile.y < 0 || projectile.y > game.canvas.height || playerHit === true || otherPlayerHit === true){
-        projectileIdToDelete = projectile.id
-      }
-    };
-    if(game.projectiles[projectileIdToDelete]){
-      delete game.projectiles[projectileIdToDelete];
-    }
-    game.getInput();
-  }, 15)
-}
-
 Game.prototype.renderGraphics = function(){
   var game = this;
   game.drawForeground();
 }
 
-// SOCKETS
-
-
-Game.prototype.socketPopPlayers = function(){
+Game.prototype.communicateWithWorker = function(){
   var game = this;
-  game.socket.on('popPlayer', function(socketId){
-    delete game.otherPlayers[socketId];
-  })
-}
+  game.gameWorker.postMessage({"player": game.player.playerData()})
 
-Game.prototype.socketBroadcastPosition = function() {
-  var game = this;
-  setInterval(function() {
-    game.socket.emit('playerPosition', {
-      "name": game.player.name,
-      "id": game.player.id,
-      "xPos": game.player.x,
-      "yPos": game.player.y,
-      "imageDir": game.player.imageDirection})
-  }, 15)
-}
-
-Game.prototype.socketSyncPosition = function() {
-  var game = this;
-  game.socket.on('playerPosition', function(moveInfo, socketId) {
-    if(game.otherPlayers[socketId]){
-      game.otherPlayers[socketId].x = moveInfo.xPos;
-      game.otherPlayers[socketId].y = moveInfo.yPos;
-      game.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
-    } else {
-      var p = new Player(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
-      game.otherPlayers[socketId] = p;
-    }
-  })
-}
-
-Game.prototype.socketEmitProjectile = function(projectile) {
-  var game = this;
-  game.socket.emit('projectileShot', projectile.projectileData())
-}
-
-Game.prototype.socketProjectileShot = function() {
-  var game = this;
-  game.socket.on('projectileShot', function(p) {
-    var projectile = new Projectile(p.x, p.y, p.endX, p.endY, p.speed, p.size, p.originator, p.id)
-    game.projectiles[projectile.id] = projectile
-  })
-}
-
-Game.prototype.socketEmitProjectileHit = function(projectile){
-  var game = this;
-  game.socket.emit('projectileHit', {
-    "player": game.player.playerData(),
-    "projectile": projectile.projectileData()
-  })
-}
-
-Game.prototype.socketInitialize = function() {
-  var game = this;
-  // game.socketAddPlayer();
-  game.socket.on('getUserId', function(userId){
-    game.player.id = userId;
-  })
-  game.socketPopPlayers();
-  game.socketBroadcastPosition();
-  game.socketSyncPosition();
-  game.socketProjectileShot();
-  game.socketGetProjectileHits();
-}
-
-Game.prototype.socketGetProjectileHits = function(){
-  var game = this;
-  game.socket.on('projectileHit', function(hitData){
-    var hitPlayer = hitData.player;
-    var projectile = hitData.projectile;
-    delete game.projectiles[projectile.id]
-  })
 }
 
 window.onload = function(){
@@ -215,6 +74,7 @@ window.onload = function(){
   game.socketGetProjectileHits();
   game.run();
   game.drawBackground();
+  game.communicateWithWorker()
   window.requestAnimationFrame(function render(){
     game.renderGraphics();
     window.requestAnimationFrame(render)

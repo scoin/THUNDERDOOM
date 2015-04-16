@@ -1,11 +1,11 @@
-var Projectile = function(startX, startY, endX, endY, speed, size, originator){
+var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
   this.x = startX;
   this.y = startY;
   this.speed = speed;
-  this.xPath = (endX - startX);
-  this.yPath = (endY - startY);
+  this.endX = endX;
+  this.endY = endY;
   this.pathAngle = Math.atan((endY - startY)/(endX - startX))
-	if(this.xPath < 0){
+	if((endX - startX) < 0){
 		this.xInc = -Math.cos(this.pathAngle) * speed;
     this.yInc = -Math.sin(this.pathAngle) * speed;
 	}
@@ -18,7 +18,12 @@ var Projectile = function(startX, startY, endX, endY, speed, size, originator){
   this.height = size;
   this.originator = originator;
 	this.damage = 5;
-  this.id = Math.random() * 10000;
+  if(id){
+    this.id = id
+  }
+  else{
+    this.id = Math.floor(Math.random() * 10000);
+  }
 }
 
 Projectile.prototype.projectileData = function(){
@@ -27,8 +32,8 @@ Projectile.prototype.projectileData = function(){
 	    "x": projectile.x,
 	    "y": projectile.y,
 	    "speed": projectile.speed,
-	    "xPath": projectile.xPath,
-	    "yPath" : projectile.yPath,
+	    "endX": projectile.endX,
+	    "endY" : projectile.endY,
 	    "xInc" : projectile.xInc,
 	    "yInc" : projectile.yInc,
 	    "size" : projectile.size,

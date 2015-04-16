@@ -1,8 +1,6 @@
 var Player = function(name, x, y, id){
     this.name = name;
     this.id = id;
-    this.x = x;
-    this.y = y;
 		this.coords = {"x": x, "y": y};
     this.xSpeed = 2;
     this.ySpeed = 2;
@@ -15,7 +13,6 @@ var Player = function(name, x, y, id){
     this.charge = 0;
 		this.hp = 10;
     this.kills = 0;
-    this.initImages();
 }
 
 Player.prototype.playerData = function(){
@@ -23,9 +20,7 @@ Player.prototype.playerData = function(){
   var playerData = {
     "name": player.name,
     "id": player.id,
-    "x": player.x,
-    "y": player.y,
-		"coord": player.coord,
+		"coords": player.coords,
     "xSpeed": player.xSpeed,
     "ySpeed": player.ySpeed,
     "xDirection": player.xDirection,
@@ -35,16 +30,6 @@ Player.prototype.playerData = function(){
     "kills": player.kills
   }
   return playerData;
-}
-
-Player.prototype.initImages = function(){
-  var player = this;
-  var sprites = ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"];
-  for(var i in sprites){
-    var img = new Image();
-    img.src = sprites[i];
-    player.images.push(img);
-  }
 }
 
 Player.prototype.setDirection = function(clientX, clientY){
@@ -101,7 +86,6 @@ Player.prototype.chargeUp = function(mouseDown){
     player.charge = 0;
   }
 }
-
 
 Player.prototype.respawn = function(game) {
 	var player = this;

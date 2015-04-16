@@ -62,7 +62,6 @@ Game.prototype.renderGraphics = function(){
 Game.prototype.communicateWithWorker = function(){
   var game = this;
   game.gameWorker.postMessage({"player": game.player.playerData()})
-
 }
 
 window.onload = function(){

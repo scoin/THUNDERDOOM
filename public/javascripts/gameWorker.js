@@ -272,11 +272,16 @@ GameWorker.prototype.socketGetProjectileHits = function(){
 
 GameWorker.prototype.communicateWithClient = function(){
   var gameWorker = this;
+  var i = 0
   gameWorker.player = new PlayerWorker()
   gameWorker.socket.on('getUserId', function(userId){
     gameWorker.player.id = userId;
   })
   self.onmessage = function(e){
+    i++
+    if(i < 305){
+    console.log(e.data)
+    }
     if(e.data.player){
       var p = e.data.player
       gameWorker.player.name = p.name

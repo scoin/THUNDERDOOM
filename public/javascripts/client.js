@@ -19,15 +19,34 @@ window.onload = function(){
   var projectiles = {};
   var clientData = {};
 
-  clientData.player = player;
-  clientData.firstRun = true;
-  clientData.canvas = {"width": canvas.width, "height": canvas.height};
+  clientData.firstRunData = {"player": player, "canvas": {"width": canvas.width, "height": canvas.height}}
 
   gameWorker.postMessage(clientData);
 
-  clientData.firstRun = false;
+  delete clientData.firstRunData;
 
-  canvas.drawBackground();
+  var playerEvents = {"keysDown": {}, "mouseCoords": [], "mouseDown": false, "fireProjectile": false};
+  
+  window.onkeydown = function(e){
+    playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
+  }
+
+  window.onkeyup = function(e){
+    delete playerEvents.keysDown[controls[String.fromCharCode(e.which)]];
+  }
+
+  window.onmousemove = function(e){
+    playerEvents.mouseCoords = [e.clientX, e.clientY];
+  }
+
+  window.onmousedown = function(e){
+    playerEvents.mouseDown = true;
+  }
+
+  window.onmouseup = function(e){
+    playerEvents.fireProjectile = true;
+    playerEvents.mouseDown = false;
+  }
 
   gameWorker.onmessage = function(gameData){
     player = gameData.player;
@@ -35,26 +54,9 @@ window.onload = function(){
     projectiles = gameData.projectiles;
   }
 
-  var playerEvents = {"keysDown": {}, "mouseCoords": [], "mouseDown": false, "fireProjectile": false};
-  window.onkeydown = function(e){
-    playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
-  }
-  window.onkeyup = function(e){
-    delete playerEvents.keysDown[controls[String.fromCharCode(e.which)]];
-  }
-  window.onmousemove = function(e){
-    playerEvents.mouseCoords = [e.clientX, e.clientY];
-  }
-  window.onmousedown = function(e){
-    playerEvents.mouseDown = true;
-  }
-  window.onmouseup = function(e){
-    playerEvents.fireProjectile = true;
-    playerEvents.mouseDown = false;
-  }
+  canvas.drawBackground();
 
   window.requestAnimationFrame(function render(){
-    clientData.player = player;
     clientData.playerEvents = playerEvents;
     gameWorker.postMessage(clientData);
     playerEvents.fireProjectile = false;

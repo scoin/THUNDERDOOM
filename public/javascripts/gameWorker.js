@@ -1,9 +1,9 @@
 importScripts('https://cdn.socket.io/socket.io-1.2.0.js')
 
-var Player = function(name, x, y, id){
+var PlayerWorker = function(name, x, y, id){
     this.name = name;
     this.id = id;
-		this.coord = {"x": x, "y": y};
+		this.coords = {"x": x, "y": y};
     this.xSpeed = 2;
     this.ySpeed = 2;
     this.xDirection = 0;
@@ -17,7 +17,7 @@ var Player = function(name, x, y, id){
     this.kills = 0;
 }
 
-Player.prototype.playerData = function(){
+PlayerWorker.prototype.playerData = function(){
   var player = this;
   var playerData = {
     "name": player.name,
@@ -35,7 +35,7 @@ Player.prototype.playerData = function(){
 }
 
 var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
-  this.coord = {"x": startX, "y": startY}
+  this.coords = {"x": startX, "y": startY}
   this.speed = speed;
   this.endX = endX;
   this.endY = endY;
@@ -190,7 +190,7 @@ GameWorker.prototype.socketAddPlayer = function(){
   game.socket.emit('addPlayer', game.player.playerData());
 
   socket.on('addPlayer', function(playerData, socketId){
-    var p = new Player(playerData.name, playerData.x, playerData.y, socketId);
+    var p = new PlayerWorker(playerData.name, playerData.x, playerData.y, socketId);
     game.otherPlayers[socketId] = p;
   })
 }
@@ -222,7 +222,7 @@ GameWorker.prototype.socketSyncPosition = function() {
       game.otherPlayers[socketId].y = moveInfo.yPos;
       game.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
     } else {
-      var p = new Player(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
+      var p = new PlayerWorker(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
       game.otherPlayers[socketId] = p;
     }
   })
@@ -273,7 +273,7 @@ GameWorker.prototype.socketGetProjectileHits = function(){
 
 GameWorker.prototype.communicateWithClient = function(){
   var gameWorker = this;
-  gameWorker.player = new Player()
+  gameWorker.player = new PlayerWorker()
   gameWorker.socket.on('getUserId', function(userId){
     gameWorker.player.id = userId;
   })
@@ -281,8 +281,8 @@ GameWorker.prototype.communicateWithClient = function(){
     if(e.data.player){
       var p = e.data.player
       gameWorker.player.name = p.name
-      gameWorker.player.coord.x = p.coord.x
-      gameWorker.player.coord.y = p.coord.y
+      gameWorker.player.coords.x = p.coords.x
+      gameWorker.player.coords.y = p.coords.y
     }
   }
 }

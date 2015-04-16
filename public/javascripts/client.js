@@ -12,12 +12,16 @@ window.onload = function(){
   var player = {
     "name": name,
     "color": "blue",
-    "coords": [Math.floor((Math.random() * (canvas.width - 50))), Math.floor((Math.random() * (canvas.height - 50)))]
+    "coords": {"x": Math.floor((Math.random() * (canvas.width - 50))), "y": Math.floor((Math.random() * (canvas.height - 50)))},
+    "imageDirection": 4
   }
+  var otherPlayers = {};
+  var projectiles = {};
   var clientData = {};
 
   clientData.player = player;
   clientData.firstRun = true;
+  clientData.canvas = {"width": canvas.width, "height": canvas.height};
 
   gameWorker.postMessage(clientData);
 
@@ -31,7 +35,7 @@ window.onload = function(){
     projectiles = gameData.projectiles;
   }
 
-  var playerEvents = {};
+  var playerEvents = {"keysDown": {}, "mouseCoords": [], "mouseDown": false, "fireProjectile": false};
   window.onkeydown = function(e){
     playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
   }
@@ -54,7 +58,7 @@ window.onload = function(){
     clientData.playerEvents = playerEvents;
     gameWorker.postMessage(clientData);
     playerEvents.fireProjectile = false;
-    canvas.drawForeground(player, players, projectiles);
+    canvas.drawForeground(player, otherPlayers, projectiles);
     window.requestAnimationFrame(render)
   })
 

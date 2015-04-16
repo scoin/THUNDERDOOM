@@ -7,11 +7,25 @@ var Canvas = function(){
     this.fgCtx = c.getContext("2d");
     var c = document.getElementById("cursor");
     this.mCtx = c.getContext("2d");
+    this.images = this.initImages();
+
+}
+
+Canvas.prototype.initImages = function(){
+  var canvas = this;
+  var images = [];
+  var sprites = ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"];
+  for(var i in sprites){
+    var img = new Image();
+    img.src = sprites[i];
+    images.push(img);
+  }
+  return images;
 }
 
 Canvas.prototype.drawPlayer = function(player){
     var canvas = this;
-    canvas.fgCtx.drawImage(player.images[player.imageDirection], player.coords.x, player.coords.y);
+    canvas.fgCtx.drawImage(canvas.images[player.imageDirection], player.coords.x, player.coords.y);
 }
 
 Canvas.prototype.drawProjectile = function(projectile){
@@ -27,7 +41,7 @@ Canvas.prototype.drawProjectile = function(projectile){
 
 Canvas.prototype.drawForeground = function(player, otherPlayers, projectiles){
   var canvas = this;
-  canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
+  canvas.fgCtx.clearRect(0, 0, canvas.width, canvas.height);
   canvas.drawPlayer(player);
   for(var i in otherPlayers){
     canvas.drawPlayer(otherPlayers[i]);

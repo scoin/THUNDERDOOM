@@ -1,5 +1,4 @@
 var express = require('express');
-var session = require('cookie-session')
 var router = express.Router();
 
 module.exports = function(io){

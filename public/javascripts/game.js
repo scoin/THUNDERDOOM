@@ -213,8 +213,6 @@ Game.prototype.socketGetProjectileHits = function(){
   game.socket.on('projectileHit', function(hitData){
     var hitPlayer = hitData.player;
     var projectile = hitData.projectile;
-    // var i = game.projectiles.map(function(p) { return p.id; }).indexOf(projectile.id);
-    // game.projectiles.splice(i, 1);
     delete game.projectiles[projectile.id]
   })
 }
@@ -233,6 +231,4 @@ window.onload = function(){
 }
 
 // player hp / game mechanics
-// projectile speed fix
-// aiming improvement - cannot do diag close to char
 // animations

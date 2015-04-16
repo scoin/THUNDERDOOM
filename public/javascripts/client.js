@@ -49,7 +49,6 @@ window.onload = function(){
     playerEvents.mouseDown = false;
   }
 
-
   window.requestAnimationFrame(function render(){
     clientData.player = player;
     clientData.playerEvents = playerEvents;

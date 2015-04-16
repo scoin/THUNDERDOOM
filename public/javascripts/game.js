@@ -124,7 +124,6 @@ Game.prototype.run = function(){
 
 Game.prototype.renderGraphics = function(){
   var game = this;
-  game.drawBackground();
   game.drawForeground();
 }
 
@@ -215,6 +214,7 @@ window.onload = function(){
   game.socketInitialize();
   game.socketGetProjectileHits();
   game.run();
+  game.drawBackground();
   window.requestAnimationFrame(function render(){
     game.renderGraphics();
     window.requestAnimationFrame(render)

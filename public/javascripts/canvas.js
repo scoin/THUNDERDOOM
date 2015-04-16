@@ -11,16 +11,38 @@ var Canvas = function(){
 
 Canvas.prototype.drawPlayer = function(player){
     var canvas = this;
-    canvas.fgCtx.drawImage(player.images[player.imageDirection], player.x, player.y);
+    canvas.fgCtx.drawImage(player.images[player.imageDirection], player.coords.x, player.coords.y);
 }
 
 Canvas.prototype.drawProjectile = function(projectile){
   var canvas = this;
   canvas.fgCtx.beginPath();
-  canvas.fgCtx.arc(projectile.x, projectile.y, projectile.size, 8, 5 * Math.PI);
-  var grd = canvas.fgCtx.createRadialGradient(projectile.x, projectile.y, projectile.size, projectile.x + projectile.size, projectile.y + projectile.size, projectile.size);
+  canvas.fgCtx.arc(projectile.coords.x, projectile.coords.y, projectile.size, 8, 5 * Math.PI);
+  var grd = canvas.fgCtx.createRadialGradient(projectile.x, projectile.y, projectile.size, projectile.coords.x + projectile.size, projectile.coords.y + projectile.size, projectile.size);
   grd.addColorStop(0, '#FFCC5E');
   grd.addColorStop(1, 'white');
   canvas.fgCtx.fillStyle=grd;
   canvas.fgCtx.fill();
+}
+
+Canvas.prototype.drawForeground = function(player, otherPlayers, projectiles){
+  var canvas = this;
+  canvas.fgCtx.clearRect(0, 0, game.canvas.width, game.canvas.height);
+  canvas.drawPlayer(player);
+  for(var i in otherPlayers){
+    canvas.drawPlayer(otherPlayers[i]);
+  };
+
+  for(var i in projectiles){
+    canvas.drawProjectile(projectiles[i]);
+  };
+}
+
+Canvas.prototype.drawBackground = function(){
+  var canvas = this;
+  var img = new Image();
+  img.src = '/images/bg.png';
+  img.onload = function(){
+      canvas.bgCtx.drawImage(img, 0, 0);
+  }
 }

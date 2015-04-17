@@ -70,3 +70,11 @@ PlayerWorker.prototype.setDirection = function(clientX, clientY){
     }
   }
 }
+
+PlayerWorker.prototype.isDead = function(){
+  var player = this;
+  if(player.hp <= 0){
+    return true
+  }
+  return false
+}

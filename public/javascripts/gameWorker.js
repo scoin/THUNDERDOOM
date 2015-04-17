@@ -21,7 +21,7 @@ PlayerWorker.prototype.playerData = function(){
   var playerData = {
     "name": player.name,
     "id": player.id,
-		"coord": player.coord,
+		"coords": player.coords,
     "xSpeed": player.xSpeed,
     "ySpeed": player.ySpeed,
     "xDirection": player.xDirection,
@@ -87,6 +87,7 @@ Projectile.prototype.move = function(){
 var GameWorker = function(){
   this.socket = io();
   this.player = undefined;
+  this.canvasDimensions = undefined;
   this.otherPlayers = [];
   this.projectiles = {};
   this.controls = {
@@ -272,21 +273,20 @@ GameWorker.prototype.socketGetProjectileHits = function(){
 
 GameWorker.prototype.communicateWithClient = function(){
   var gameWorker = this;
-  var i = 0
   gameWorker.player = new PlayerWorker()
+
   gameWorker.socket.on('getUserId', function(userId){
     gameWorker.player.id = userId;
   })
+
   self.onmessage = function(e){
-    i++
-    if(i < 305){
-    console.log(e.data)
-    }
-    if(e.data.player){
-      var p = e.data.player
-      gameWorker.player.name = p.name
-      gameWorker.player.coords.x = p.coords.x
-      gameWorker.player.coords.y = p.coords.y
+    if(e.data.firstRunData){
+      var data = e.data.firstRunData
+      gameWorker.player.name = data.player.name
+      gameWorker.player.coords.x = data.player.coords.x
+      gameWorker.player.coords.y = data.player.coords.y
+
+      gameWorker.canvasDimensions = data.canvas
     }
   }
 }
@@ -297,5 +297,4 @@ GameWorker.prototype.init = function(){
 
 var gameWorker = new GameWorker()
 gameWorker.communicateWithClient()
-setTimeout(function(){
-  console.log(gameWorker.player)}, 30)
+setTimeout(function(){console.log(gameWorker.canvasDimensions)}, 30)

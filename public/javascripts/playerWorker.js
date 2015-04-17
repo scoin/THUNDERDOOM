@@ -12,6 +12,7 @@ var PlayerWorker = function(name, x, y, id){
     this.charge = 0;
     this.hp = 10;
     this.kills = 0;
+    this.color = "blue";
 }
 
 PlayerWorker.prototype.playerData = function(){
@@ -20,6 +21,7 @@ PlayerWorker.prototype.playerData = function(){
     "coords": player.coords,
     "hp": player.hp,
     "imageDirection": player.imageDirection,
+    "color": player.color,
     "kills": player.kills
   }
   return playerData;
@@ -69,4 +71,12 @@ PlayerWorker.prototype.setDirection = function(clientX, clientY){
       player.xDirection = -1;
     }
   }
+}
+
+PlayerWorker.prototype.isDead = function(){
+  var player = this;
+  if(player.hp <= 0){
+    return true
+  }
+  return false
 }

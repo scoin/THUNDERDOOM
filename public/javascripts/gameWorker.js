@@ -40,7 +40,7 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
 }
 
 GameWorker.prototype.handleClientEvents = function(){
-  if(gameWorker.mouseCoords.length === 2){ // this is acting weird in client. array is empty until the mouse first moves, i think
+  if(gameWorker.mouseCoords.length === 2){
       gameWorker.player.setDirection(gameWorker.mouseCoords[0], gameWorker.mouseCoords[1])
   }
   if(gameWorker.mouseDown === false && gameWorker.player.charge > 0){
@@ -92,7 +92,7 @@ GameWorker.prototype.moveProjectiles = function(){
   };
   if(gameWorker.projectiles[projectileIdToDelete]){
     delete gameWorker.projectiles[projectileIdToDelete];
-  } 
+  }
 }
 
 GameWorker.prototype.movePlayerWithinBounds = function(){
@@ -115,10 +115,15 @@ GameWorker.prototype.movePlayerWithinBounds = function(){
 GameWorker.prototype.run = function(){
   var gameWorker = this;
   setInterval(function(){
-    gameWorker.handleClientEvents();
     gameWorker.moveProjectiles();
-    gameWorker.movePlayerWithinBounds();
-    gameWorker.socketBroadcastPosition();
+    if(gameWorker.player.isDead() === true){
+
+    }
+    else{
+      gameWorker.handleClientEvents();
+      gameWorker.movePlayerWithinBounds();
+      gameWorker.socketBroadcastPosition();
+    }
     self.postMessage({"gameData": {"playerData": gameWorker.player.playerData(), "otherPlayers": gameWorker.otherPlayerData(), "projectiles": gameWorker.projectiles}})
   }, 15)
 }
@@ -212,7 +217,7 @@ GameWorker.prototype.receiveMessagesFromClient = function(){
 
       gameWorker.player.name = firstRunData.player.name
       gameWorker.player.coords = firstRunData.player.coords
-
+      gameWorker.player.color = firstRunData.player.color
       gameWorker.canvasDimensions = firstRunData.canvas
     }
   }

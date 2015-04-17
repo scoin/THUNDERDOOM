@@ -32,7 +32,7 @@ Canvas.prototype.drawProjectile = function(projectile){
   var canvas = this;
   canvas.fgCtx.beginPath();
   canvas.fgCtx.arc(projectile.coords.x, projectile.coords.y, projectile.size, 8, 5 * Math.PI);
-  var grd = canvas.fgCtx.createRadialGradient(projectile.x, projectile.y, projectile.size, projectile.coords.x + projectile.size, projectile.coords.y + projectile.size, projectile.size);
+  var grd = canvas.fgCtx.createRadialGradient(projectile.coords.x, projectile.coords.y, projectile.size, projectile.coords.x + projectile.size, projectile.coords.y + projectile.size, projectile.size);
   grd.addColorStop(0, '#FFCC5E');
   grd.addColorStop(1, 'white');
   canvas.fgCtx.fillStyle=grd;
@@ -47,8 +47,8 @@ Canvas.prototype.drawForeground = function(player, otherPlayers, projectiles){
     canvas.drawPlayer(otherPlayers[i]);
   };
 
-  for(var i in projectiles){
-    canvas.drawProjectile(projectiles[i]);
+  for(var id in projectiles){
+    canvas.drawProjectile(projectiles[id]);
   };
 }
 

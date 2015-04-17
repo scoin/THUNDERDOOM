@@ -25,7 +25,7 @@ window.onload = function(){
 
   delete clientData.firstRunData;
 
-  var playerEvents = {"keysDown": {}, "mouseCoords": [], "mouseDown": false, "fireProjectile": false};
+  var playerEvents = {"keysDown": {}, "mouseCoords": [0,0], "mouseDown": false, "fireProjectile": false};
 
   playerEvents.fireProjectile = false;
   window.onkeydown = function(e){
@@ -50,11 +50,13 @@ window.onload = function(){
   }
 
   gameWorker.onmessage = function(e){
-    if(e.data.playerData){
-      var playerData = e.data.playerData
+    if(e.data.gameData){
+      var playerData = e.data.gameData.playerData
       player.coords = playerData.coords
       player.imageDirection = playerData.imageDirection
       player.kills = playerData.kills
+
+      projectiles = e.data.gameData.projectiles
     }
     else if(e.data.playerId){
       player.id = e.data.playerId

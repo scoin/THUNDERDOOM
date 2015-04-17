@@ -159,13 +159,26 @@ GameWorker.prototype.run = function(){
     if(gameWorker.mouseCoords.length === 2){ // this is acting weird in client. array is empty until the mouse first moves, i think
       gameWorker.player.setDirection(gameWorker.mouseCoords[0], gameWorker.mouseCoords[1])
     }
-    if(gameWorker.mouseDown === true){
-      // var pSize = 5 // Math.floor(gameWorker.player.charge / 6) > 5 ? Math.floor(gameWorker.player.charge / 6) :
-      // var p = new Projectile(gameWorker.player.coords.x + (gameWorker.player.width / 2), gameWorker.player.coords.y + (gameWorker.player.height / 2), e.clientX, e.clientY, 10, pSize, gameWorker.player.id)
-      // gameWorker.projectiles[p.id] = p;
-      // gameWorker.socketEmitProjectile(p);
+    if(gameWorker.mouseDown === false && gameWorker.player.charge > 0){
+      var pSize = Math.floor(gameWorker.player.charge / 6) > 5 ? Math.floor(gameWorker.player.charge / 6) : 5
+      var p = new Projectile(
+        gameWorker.player.coords.x + (gameWorker.player.width / 2),
+        gameWorker.player.coords.y + (gameWorker.player.height / 2),
+        gameWorker.mouseCoords[0],
+        gameWorker.mouseCoords[1],
+        10,
+        pSize,
+        gameWorker.player.id
+      )
+
+      gameWorker.projectiles[p.id] = p;
+      gameWorker.socketEmitProjectile(p);
+      gameWorker.player.charge = 0;
     }
-    // gameWorker.player.chargeUp(gameWorker.mouseDown);
+    else if(gameWorker.mouseDown === true){
+      if(gameWorker.player.charge < 150) gameWorker.player.charge += 1;
+    }
+
     var projectileIdToDelete
     for(var i in gameWorker.projectiles){
       var projectile = gameWorker.projectiles[i];
@@ -183,7 +196,7 @@ GameWorker.prototype.run = function(){
           break
         }
       }
-      if(projectile.coords.x < 0 || projectile.coords.x > gameWorker.canvas.width || projectile.coords.y < 0 || projectile.coords.y > gameWorker.canvas.height || playerHit === true || otherPlayerHit === true){
+      if(projectile.coords.x < 0 || projectile.coords.x > gameWorker.canvasDimensions.width || projectile.coords.y < 0 || projectile.coords.y > gameWorker.canvasDimensions.height || playerHit === true || otherPlayerHit === true){
         projectileIdToDelete = projectile.id
       }
     };
@@ -191,7 +204,7 @@ GameWorker.prototype.run = function(){
       delete gameWorker.projectiles[projectileIdToDelete];
     }
     gameWorker.movePlayerWithinBounds();
-    self.postMessage({"playerData": gameWorker.player.playerDataForClient()})
+    self.postMessage({"gameData": {"playerData": gameWorker.player.playerDataForClient(), "projectiles": gameWorker.projectiles}})
   }, 15)
 }
 

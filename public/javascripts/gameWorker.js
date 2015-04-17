@@ -232,7 +232,7 @@ GameWorker.prototype.socketAddPlayer = function(){
   gameWorker.socket.emit('addPlayer', gameWorker.player.playerData());
 
   gameWorker.socket.on('addPlayer', function(playerData, socketId){
-    var p = new PlayerWorker(playerData.name, playerData.x, playerData.y, socketId);
+    var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId);
     gameWorker.otherPlayers[socketId] = p;
   })
 }

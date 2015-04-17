@@ -16,10 +16,11 @@ var PlayerWorker = function(name, x, y, id){
     this.kills = 0;
 }
 
-PlayerWorker.prototype.playerDataForClient = function(){
+PlayerWorker.prototype.playerData = function(){
   var player = this;
   var playerData = {
 		"coords": player.coords,
+    "hp": player.hp,
     "imageDirection": player.imageDirection,
     "kills": player.kills
   }
@@ -190,8 +191,8 @@ GameWorker.prototype.run = function(){
 		  }
 
       var otherPlayerHit = false
-      for(i in gameWorker.otherPlayers){
-        if(gameWorker.detectCollision(gameWorker.otherPlayers[i], projectile) === true){
+      for(id in gameWorker.otherPlayers){
+        if(gameWorker.detectCollision(gameWorker.otherPlayers[id], projectile) === true){
           otherPlayerHit = true
           break
         }
@@ -204,7 +205,8 @@ GameWorker.prototype.run = function(){
       delete gameWorker.projectiles[projectileIdToDelete];
     }
     gameWorker.movePlayerWithinBounds();
-    self.postMessage({"gameData": {"playerData": gameWorker.player.playerDataForClient(), "projectiles": gameWorker.projectiles}})
+    gameWorker.socketBroadcastPosition()
+    self.postMessage({"gameData": {"playerData": gameWorker.player.playerData(), "otherPlayers": gameWorker.otherPlayers, "projectiles": gameWorker.projectiles}})
   }, 15)
 }
 
@@ -226,39 +228,39 @@ GameWorker.prototype.movePlayerWithinBounds = function(){
 }
 // Sockets
 GameWorker.prototype.socketAddPlayer = function(){
-  game.socket.emit('addPlayer', game.player.playerData());
+  var gameWorker = this;
+  gameWorker.socket.emit('addPlayer', gameWorker.player.playerData());
 
-  socket.on('addPlayer', function(playerData, socketId){
-    var p = new PlayerWorker(playerData.name, playerData.x, playerData.y, socketId);
-    game.otherPlayers[socketId] = p;
+  gameWorker.socket.on('addPlayer', function(playerData, socketId){
+    var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId);
+    gameWorker.otherPlayers[socketId] = p;
   })
 }
 
 GameWorker.prototype.socketPopPlayers = function(){
-  var game = this;
-  game.socket.on('popPlayer', function(socketId){
-    delete game.otherPlayers[socketId];
+  var gameWorker = this;
+  gameWorker.socket.on('popPlayer', function(socketId){
+    delete gameWorker.otherPlayers[socketId];
   })
 }
 
 GameWorker.prototype.socketBroadcastPosition = function() {
   var game = this;
-  setInterval(function() {
-    game.socket.emit('playerPosition', {
-      "name": game.player.name,
-      "id": game.player.id,
-      "xPos": game.player.coords.x,
-      "yPos": game.player.coords.y,
-      "imageDir": game.player.imageDirection})
-  }, 15)
+  game.socket.emit('playerPosition', {
+    "name": game.player.name,
+    "id": game.player.id,
+    "xPos": game.player.coords.x,
+    "yPos": game.player.coords.y,
+    "imageDir": game.player.imageDirection
+  })
 }
 
 GameWorker.prototype.socketSyncPosition = function() {
   var game = this;
   game.socket.on('playerPosition', function(moveInfo, socketId) {
     if(game.otherPlayers[socketId]){
-      game.otherPlayers[socketId].x = moveInfo.xPos;
-      game.otherPlayers[socketId].y = moveInfo.yPos;
+      game.otherPlayers[socketId].coords.x = moveInfo.xPos;
+      game.otherPlayers[socketId].coords.y = moveInfo.yPos;
       game.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
     } else {
       var p = new PlayerWorker(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
@@ -268,15 +270,15 @@ GameWorker.prototype.socketSyncPosition = function() {
 }
 
 GameWorker.prototype.socketEmitProjectile = function(projectile) {
-  var game = this;
-  game.socket.emit('projectileShot', projectile.projectileData())
+  var gameWorker = this;
+  gameWorker.socket.emit('projectileShot', projectile.projectileData())
 }
 
 GameWorker.prototype.socketProjectileShot = function() {
-  var game = this;
-  game.socket.on('projectileShot', function(p) {
-    var projectile = new Projectile(p.x, p.y, p.endX, p.endY, p.speed, p.size, p.originator, p.id)
-    game.projectiles[projectile.id] = projectile
+  var gameWorker = this;
+  gameWorker.socket.on('projectileShot', function(p) {
+    var projectile = new Projectile(p.coords.x, p.coords.y, p.endX, p.endY, p.speed, p.size, p.originator, p.id)
+    gameWorker.projectiles[projectile.id] = projectile
   })
 }
 
@@ -286,19 +288,6 @@ GameWorker.prototype.socketEmitProjectileHit = function(projectile){
     "player": game.player.playerData(),
     "projectile": projectile.projectileData()
   })
-}
-
-GameWorker.prototype.socketInitialize = function() {
-  var game = this;
-  game.socketAddPlayer();
-  game.socket.on('getUserId', function(userId){
-    game.player.id = userId;
-  })
-  game.socketPopPlayers();
-  game.socketBroadcastPosition();
-  game.socketSyncPosition();
-  game.socketProjectileShot();
-  game.socketGetProjectileHits();
 }
 
 GameWorker.prototype.socketGetProjectileHits = function(){
@@ -340,6 +329,10 @@ GameWorker.prototype.init = function(){
     gameWorker.player.id = userId;
     self.postMessage({"playerId": userId})
   })
+  gameWorker.socketAddPlayer();
+  gameWorker.socketSyncPosition()
+  gameWorker.socketProjectileShot()
+  gameWorker.socketPopPlayers()
 }
 
 var gameWorker = new GameWorker()

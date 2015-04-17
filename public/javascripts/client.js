@@ -26,30 +26,27 @@ window.onload = function(){
   delete clientData.firstRunData;
 
   var playerEvents = {"keysDown": {}, "mouseCoords": [], "mouseDown": false, "fireProjectile": false};
-  var dataForWorker = function(){
-    playerEvents.fireProjectile = false;
-    window.onkeydown = function(e){
-      playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
-    }
 
-    window.onkeyup = function(e){
-      delete playerEvents.keysDown[controls[String.fromCharCode(e.which)]];
-    }
+  playerEvents.fireProjectile = false;
+  window.onkeydown = function(e){
+    playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
+  }
 
-    document.onmousemove = function(e){ // absolutely no idea why this "works" with document and now window...
-      playerEvents.mouseCoords = [e.clientX, e.clientY];
-    }
+  window.onkeyup = function(e){
+    delete playerEvents.keysDown[controls[String.fromCharCode(e.which)]];
+  }
 
-    window.onmousedown = function(e){
-      playerEvents.mouseDown = true;
-    }
+  window.onmousemove = function(e){
+    playerEvents.mouseCoords = [e.clientX, e.clientY];
+  }
 
-    window.onmouseup = function(e){
-      playerEvents.fireProjectile = true;
-      playerEvents.mouseDown = false;
-    }
-    gameWorker.postMessage({"playerEvents": playerEvents});
+  window.onmousedown = function(e){
+    playerEvents.mouseDown = true;
+  }
 
+  window.onmouseup = function(e){
+    playerEvents.fireProjectile = true;
+    playerEvents.mouseDown = false;
   }
 
   gameWorker.onmessage = function(e){
@@ -67,7 +64,7 @@ window.onload = function(){
   canvas.drawBackground();
 
   window.requestAnimationFrame(function render(){
-    dataForWorker()
+    gameWorker.postMessage({"playerEvents": playerEvents});
     canvas.drawForeground(player, otherPlayers, projectiles);
     window.requestAnimationFrame(render)
   })

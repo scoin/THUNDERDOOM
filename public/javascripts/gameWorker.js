@@ -1,128 +1,6 @@
 importScripts('https://cdn.socket.io/socket.io-1.2.0.js')
-var PlayerWorker = function(name, x, y, id){
-    this.name = name;
-    this.id = id;
-		this.coords = {"x": x, "y": y};
-    this.xSpeed = 2;
-    this.ySpeed = 2;
-    this.xDirection = 0;
-    this.yDirection = 1;
-    this.imageDirection = 4;
-    this.images = [];
-    this.width = 35;
-    this.height = 56;
-    this.charge = 0;
-		this.hp = 10;
-    this.kills = 0;
-}
-
-PlayerWorker.prototype.playerData = function(){
-  var player = this;
-  var playerData = {
-		"coords": player.coords,
-    "hp": player.hp,
-    "imageDirection": player.imageDirection,
-    "kills": player.kills
-  }
-  return playerData;
-}
-
-PlayerWorker.prototype.move = function(keysDown){
-  var player = this;
-  if("up" in keysDown) player.yDirection == -1 ? player.coords.y = player.coords.y - player.ySpeed : player.coords.y = player.coords.y - (player.ySpeed / 2);
-  if("down" in keysDown) player.yDirection == 1 ? player.coords.y = player.coords.y + player.ySpeed : player.coords.y = player.coords.y + (player.ySpeed / 2);
-  if("left" in keysDown) player.xDirection == -1 ? player.coords.x = player.coords.x - player.xSpeed : player.coords.x = player.coords.x - (player.xSpeed / 2);
-  if("right" in keysDown) player.xDirection == 1 ? player.coords.x = player.coords.x + player.xSpeed : player.coords.x = player.coords.x + (player.xSpeed / 2);
-}
-
-PlayerWorker.prototype.setDirection = function(clientX, clientY){
-  var player = this;
-  if(clientY < player.coords.y){
-    player.yDirection = -1;
-    if(clientX >= player.coords.x - (player.width * 4) && clientX <= player.coords.x + (player.width * 4)){
-      player.imageDirection = 0;
-      player.xDirection = 0;
-    } else if(clientX > player.coords.x){
-      player.imageDirection = 1;
-      player.xDirection = 1;
-    } else if(clientX < player.coords.x){
-      player.imageDirection = 7;
-      player.xDirection = -1;
-    }
-  } else if(clientY >= (player.coords.y - player.height * 2) && clientY <= (player.coords.y + player.height * 2)){
-    player.yDirection = 0;
-    if(clientX > player.coords.x){
-      player.imageDirection = 2;
-      player.xDirection = 1;
-    } else if(clientX < player.coords.x){
-      player.imageDirection = 6;
-      player.xDirection = -1;
-    }
-  } else if(clientY > player.coords.y){
-    player.yDirection = 1;
-    if(clientX >= player.coords.x - (player.width * 4) && clientX <= player.coords.x + (player.width * 4)){
-      player.imageDirection = 4;
-      player.xDirection = 0;
-    } else if(clientX > player.coords.x){
-      player.imageDirection = 3;
-      player.xDirection = 1;
-    } else if(clientX < player.coords.x){
-      player.imageDirection = 5;
-      player.xDirection = -1;
-    }
-  }
-}
-
-var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
-  this.coords = {"x": startX, "y": startY}
-  this.speed = speed;
-  this.endX = endX;
-  this.endY = endY;
-  this.pathAngle = Math.atan((endY - startY)/(endX - startX))
-	if((endX - startX) < 0){
-		this.xInc = -Math.cos(this.pathAngle) * speed;
-    this.yInc = -Math.sin(this.pathAngle) * speed;
-	}
-	else{
-    this.xInc = Math.cos(this.pathAngle) * speed;
-		this.yInc = Math.sin(this.pathAngle) * speed;
-	}
-  this.size = size;
-  this.width = size;
-  this.height = size;
-  this.originator = originator;
-	this.damage = 5;
-  if(id){
-    this.id = id
-  }
-  else{
-    this.id = Math.floor(Math.random() * 10000);
-  }
-}
-
-Projectile.prototype.projectileData = function(){
-    var projectile = this;
-    var data_obj = {
-	    "coords": projectile.coords,
-	    "speed": projectile.speed,
-	    "endX": projectile.endX,
-	    "endY" : projectile.endY,
-	    "xInc" : projectile.xInc,
-	    "yInc" : projectile.yInc,
-	    "size" : projectile.size,
-	    "width" : projectile.width,
-	    "height" : projectile.height,
-	    "originator" : projectile.originator,
-	    "id": projectile.id
-    }
-    return data_obj;
-}
-
-Projectile.prototype.move = function(){
-  var projectile = this;
-  projectile.coords.x += projectile.xInc;
-  projectile.coords.y += projectile.yInc;
-}
+importScripts('/javascripts/playerWorker.js')
+importScripts('/javascripts/projectile.js')
 
 var GameWorker = function(){
   this.socket = io();
@@ -134,6 +12,15 @@ var GameWorker = function(){
   this.mouseCoords = [];
   this.mouseDown = false;
   this.fireProjectile = false;
+}
+
+GameWorker.prototype.otherPlayerData = function(){
+  var gameWorker = this;
+  var playerData = {};
+  for(var p in gameWorker.otherPlayers){
+    playerData[p] = gameWorker.otherPlayers[p].playerData();
+  }
+  return playerData;
 }
 
 GameWorker.prototype.detectCollision = function(objOne, objTwo){
@@ -206,7 +93,7 @@ GameWorker.prototype.run = function(){
     }
     gameWorker.movePlayerWithinBounds();
     gameWorker.socketBroadcastPosition()
-    self.postMessage({"gameData": {"playerData": gameWorker.player.playerData(), "otherPlayers": gameWorker.otherPlayers, "projectiles": gameWorker.projectiles}})
+    self.postMessage({"gameData": {"playerData": gameWorker.player.playerData(), "otherPlayers": gameWorker.otherPlayerData(), "projectiles": gameWorker.projectiles}})
   }, 15)
 }
 

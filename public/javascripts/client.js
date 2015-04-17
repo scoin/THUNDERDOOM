@@ -26,7 +26,7 @@ window.onload = function(){
   delete clientData.firstRunData;
 
   var playerEvents = {"keysDown": {}, "mouseCoords": [], "mouseDown": false, "fireProjectile": false};
-  
+
   window.onkeydown = function(e){
     playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
   }
@@ -48,10 +48,16 @@ window.onload = function(){
     playerEvents.mouseDown = false;
   }
 
-  gameWorker.onmessage = function(gameData){
-    player = gameData.player;
-    otherPlayers = gameData.otherPlayers;
-    projectiles = gameData.projectiles;
+  gameWorker.onmessage = function(e){
+    if(e.data.playerData){
+      var playerData = e.data.playerData
+      player.coords = playerData.coords
+      player.imageDirection = playerData.imageDirection
+      player.kills = playerData.kills
+    }
+    else if(e.data.playerId){
+      player.id = e.data.playerId
+    }
   }
 
   canvas.drawBackground();

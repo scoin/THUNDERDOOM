@@ -16,22 +16,24 @@ var PlayerWorker = function(name, x, y, id){
     this.kills = 0;
 }
 
-PlayerWorker.prototype.playerData = function(){
+PlayerWorker.prototype.playerDataForClient = function(){
   var player = this;
   var playerData = {
-    "name": player.name,
-    "id": player.id,
 		"coords": player.coords,
-    "xSpeed": player.xSpeed,
-    "ySpeed": player.ySpeed,
-    "xDirection": player.xDirection,
-    "yDirection": player.yDirection,
     "imageDirection": player.imageDirection,
-    "charge": player.charge,
     "kills": player.kills
   }
   return playerData;
 }
+
+PlayerWorker.prototype.move = function(keysDown){
+  var player = this;
+  if("up" in keysDown) player.yDirection == -1 ? player.coords.y = player.coords.y - player.ySpeed : player.coords.y = player.coords.y - (player.ySpeed / 2);
+  if("down" in keysDown) player.yDirection == 1 ? player.coords.y = player.coords.y + player.ySpeed : player.coords.y = player.coords.y + (player.ySpeed / 2);
+  if("left" in keysDown) player.xDirection == -1 ? player.coords.x = player.coords.x - player.xSpeed : player.coords.x = player.coords.x - (player.xSpeed / 2);
+  if("right" in keysDown) player.xDirection == 1 ? player.coords.x = player.coords.x + player.xSpeed : player.coords.x = player.coords.x + (player.xSpeed / 2);
+}
+
 
 var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
   this.coords = {"x": startX, "y": startY}
@@ -88,16 +90,11 @@ var GameWorker = function(){
   this.socket = io();
   this.player = undefined;
   this.canvasDimensions = undefined;
-  this.otherPlayers = [];
+  this.otherPlayers = {}; // this should produce bugs. it used to be an array. it should be a dict with player ids as the key
   this.projectiles = {};
-  this.controls = {
-    "W": "up",
-    "S": "down",
-    "A": "left",
-    "D": "right"
-  }
   this.keysDown = {};
   this.mouseDown = false;
+  this.fireProjectile = false;
 }
 
 GameWorker.prototype.detectCollision = function(objOne, objTwo){
@@ -121,26 +118,13 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
 GameWorker.prototype.run = function(){
   var game = this;
   setInterval(function(){
-    window.onkeydown = function(e){
-      game.keysDown[game.controls[String.fromCharCode(e.which)]] = true;
-    }
-    window.onkeyup = function(e){
-      delete game.keysDown[game.controls[String.fromCharCode(e.which)]];
-    }
-    window.onmousemove = function(e){
-      game.player.setDirection(e.clientX, e.clientY);
-    }
-    window.onmousedown = function(e){
-      game.mouseDown = true;
-    }
-    window.onmouseup = function(e){
-      game.mouseDown = false;
-      var pSize = Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) : 5
+    if(game.mouseDown === true){
+      var pSize = 5 // Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) :
       var p = new Projectile(game.player.coords.x + (game.player.width / 2), game.player.coords.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id)
       game.projectiles[p.id] = p;
       game.socketEmitProjectile(p);
     }
-    game.player.chargeUp(game.mouseDown);
+    // game.player.chargeUp(game.mouseDown);
     var projectileIdToDelete
     for(var i in game.projectiles){
       var projectile = game.projectiles[i];
@@ -165,22 +149,23 @@ GameWorker.prototype.run = function(){
     if(game.projectiles[projectileIdToDelete]){
       delete game.projectiles[projectileIdToDelete];
     }
-    game.getInput();
+    game.movePlayerWithinBounds();
+    self.postMessage({"playerData": gameWorker.player.playerDataForClient()})
   }, 15)
 }
 
-GameWorker.prototype.getInput = function(){
+GameWorker.prototype.movePlayerWithinBounds = function(){
   var game = this;
   if(game.player.coords.x <= 0){
     delete game.keysDown['left'];
   }
-  if(game.player.coords.x + game.player.width >= game.canvas.width){
+  if(game.player.coords.x + game.player.width >= game.canvasDimensions.width){
     delete game.keysDown['right'];
   }
   if(game.player.coords.y <= 0){
     delete game.keysDown['up'];
   }
-  if(game.player.coords.y + game.player.height >= game.canvas.height){
+  if(game.player.coords.y + game.player.height >= game.canvasDimensions.height){
     delete game.keysDown['down'];
   }
   game.player.move(game.keysDown);
@@ -271,30 +256,40 @@ GameWorker.prototype.socketGetProjectileHits = function(){
   })
 }
 
-GameWorker.prototype.communicateWithClient = function(){
+GameWorker.prototype.receiveMessagesFromClient = function(){
   var gameWorker = this;
-  gameWorker.player = new PlayerWorker()
-
-  gameWorker.socket.on('getUserId', function(userId){
-    gameWorker.player.id = userId;
-  })
 
   self.onmessage = function(e){
-    if(e.data.firstRunData){
-      var data = e.data.firstRunData
-      gameWorker.player.name = data.player.name
-      gameWorker.player.coords.x = data.player.coords.x
-      gameWorker.player.coords.y = data.player.coords.y
+    if(e.data.playerEvents){
+      var playerEvents = e.data.playerEvents
 
-      gameWorker.canvasDimensions = data.canvas
+      gameWorker.keysDown = playerEvents.keysDown
+      gameWorker.mouseCoords = playerEvents.mouseCoords
+      gameWorker.mouseDown = playerEvents.mouseDown
+      gameWorker.fireProjectile = playerEvents.fireProjectile
+    }
+    else if(e.data.firstRunData){
+      var firstRunData = e.data.firstRunData
+
+      gameWorker.player.name = firstRunData.player.name
+      gameWorker.player.coords = firstRunData.player.coords
+
+      gameWorker.canvasDimensions = firstRunData.canvas
     }
   }
 }
 
 GameWorker.prototype.init = function(){
+  var gameWorker = this;
+  gameWorker.player = new PlayerWorker()
 
+  gameWorker.socket.on('getUserId', function(userId){
+    gameWorker.player.id = userId;
+    self.postMessage({"playerId": userId})
+  })
 }
 
 var gameWorker = new GameWorker()
-gameWorker.communicateWithClient()
-setTimeout(function(){console.log(gameWorker.canvasDimensions)}, 30)
+gameWorker.init()
+gameWorker.receiveMessagesFromClient()
+gameWorker.run()

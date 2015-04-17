@@ -72,10 +72,10 @@ Player.prototype.setDirection = function(clientX, clientY){
 
 Player.prototype.move = function(keysDown){
   var player = this;
-  if("up" in keysDown) player.yDirection == -1 ? player.y = player.y - player.ySpeed : player.y = player.y - (player.ySpeed / 2);
-  if("down" in keysDown) player.yDirection == 1 ? player.y = player.y + player.ySpeed : player.y = player.y + (player.ySpeed / 2);
-  if("left" in keysDown) player.xDirection == -1 ? player.x = player.x - player.xSpeed : player.x = player.x - (player.xSpeed / 2);
-  if("right" in keysDown) player.xDirection == 1 ? player.x = player.x + player.xSpeed : player.x = player.x + (player.xSpeed / 2);
+  if("up" in keysDown) player.yDirection == -1 ? player.coords.y = player.coords.y - player.ySpeed : player.coords.y = player.coords.y - (player.ySpeed / 2);
+  if("down" in keysDown) player.yDirection == 1 ? player.coords.y = player.coords.y + player.ySpeed : player.coords.y = player.coords.y + (player.ySpeed / 2);
+  if("left" in keysDown) player.xDirection == -1 ? player.coords.x = player.coords.x - player.xSpeed : player.coords.x = player.coords.x - (player.xSpeed / 2);
+  if("right" in keysDown) player.xDirection == 1 ? player.coords.x = player.coords.x + player.xSpeed : player.coords.x = player.coords.x + (player.xSpeed / 2);
 }
 
 Player.prototype.chargeUp = function(mouseDown){

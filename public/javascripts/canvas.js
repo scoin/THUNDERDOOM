@@ -1,3 +1,16 @@
+var sprites = {
+  "blue": ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"],
+  "black": ["/images/blackmage/0.png", "/images/blackmage/1.png", "/images/blackmage/2.png", "/images/blackmage/3.png", "/images/blackmage/4.png", "/images/blackmage/5.png", "/images/blackmage/6.png", "/images/blackmage/7.png"]
+}
+
+var spriteImageCount = function(){
+  var count = 0;
+  for(var color in sprites){
+    count += sprites[color].length
+  }
+  return count;
+}
+
 var Canvas = function(){
     var c = document.getElementById("background");
     this.width = c.width;
@@ -7,25 +20,34 @@ var Canvas = function(){
     this.fgCtx = c.getContext("2d");
     var c = document.getElementById("cursor");
     this.mCtx = c.getContext("2d");
-    this.images = this.initImages();
-
+    this.images = {};
+    this.loaded = 0;
 }
 
-Canvas.prototype.initImages = function(){
+Canvas.prototype.initImages = function(callback){
   var canvas = this;
-  var images = [];
-  var sprites = ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"];
-  for(var i in sprites){
-    var img = new Image();
-    img.src = sprites[i];
-    images.push(img);
+  var imgCount = spriteImageCount();
+  var loadedImgs = 0;
+  for(var color in sprites){
+    canvas.images[color] = [];
+    for(var imgPath in sprites[color]){
+      var img = new Image();
+      img.onload = function(){
+        loadedImgs += 1;
+        if(loadedImgs >= imgCount){
+          callback();
+          return;
+        }
+      }
+      img.src = sprites[color][imgPath];
+      canvas.images[color].push(img);
+    }
   }
-  return images;
 }
 
 Canvas.prototype.drawPlayer = function(player){
     var canvas = this;
-    canvas.fgCtx.drawImage(canvas.images[player.imageDirection], player.coords.x, player.coords.y);
+    canvas.fgCtx.drawImage(canvas.images[player.color][player.imageDirection], player.coords.x, player.coords.y);
 }
 
 Canvas.prototype.drawProjectile = function(projectile){

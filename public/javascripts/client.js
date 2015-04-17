@@ -64,11 +64,11 @@ window.onload = function(){
   }
 
   canvas.drawBackground();
-
-  window.requestAnimationFrame(function render(){
-    gameWorker.postMessage({"playerEvents": playerEvents});
-    canvas.drawForeground(player, otherPlayers, projectiles);
-    window.requestAnimationFrame(render)
-  })
-
+  canvas.initImages(function(){
+    window.requestAnimationFrame(function render(){
+      gameWorker.postMessage({"playerEvents": playerEvents});
+      canvas.drawForeground(player, otherPlayers, projectiles);
+      window.requestAnimationFrame(render)
+    })
+  });
 }

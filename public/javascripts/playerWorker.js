@@ -7,7 +7,6 @@ var PlayerWorker = function(name, x, y, id){
     this.xDirection = 0;
     this.yDirection = 1;
     this.imageDirection = 4;
-    this.images = [];
     this.width = 35;
     this.height = 56;
     this.charge = 0;

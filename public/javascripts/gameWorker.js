@@ -6,12 +6,11 @@ var GameWorker = function(){
   this.socket = io();
   this.player = undefined;
   this.canvasDimensions = undefined;
-  this.otherPlayers = {}; // this should produce bugs. it used to be an array. it should be a dict with player ids as the key
+  this.otherPlayers = {};
   this.projectiles = {};
   this.keysDown = {};
   this.mouseCoords = [];
   this.mouseDown = false;
-  this.fireProjectile = false;
 }
 
 GameWorker.prototype.otherPlayerData = function(){
@@ -28,7 +27,6 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
 		if(objOne.id === objTwo.originator) {
 			return false
 		}
-
     var objOneXRange = [objOne.coords.x, objOne.coords.x + objOne.width];
     var objOneYRange = [objOne.coords.y, objOne.coords.y + objOne.height];
     var objTwoXRange = [objTwo.coords.x - (objTwo.width/2), objTwo.coords.x + (objTwo.width/2)];
@@ -41,60 +39,60 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
     return false;
 }
 
-GameWorker.prototype.run = function(){
-  var gameWorker = this;
-  setInterval(function(){
-    if(gameWorker.mouseCoords.length === 2){ // this is acting weird in client. array is empty until the mouse first moves, i think
+GameWorker.prototype.handleClientEvents = function(){
+  if(gameWorker.mouseCoords.length === 2){ // this is acting weird in client. array is empty until the mouse first moves, i think
       gameWorker.player.setDirection(gameWorker.mouseCoords[0], gameWorker.mouseCoords[1])
-    }
-    if(gameWorker.mouseDown === false && gameWorker.player.charge > 0){
-      var pSize = Math.floor(gameWorker.player.charge / 6) > 5 ? Math.floor(gameWorker.player.charge / 6) : 5
-      var p = new Projectile(
-        gameWorker.player.coords.x + (gameWorker.player.width / 2),
-        gameWorker.player.coords.y + (gameWorker.player.height / 2),
-        gameWorker.mouseCoords[0],
-        gameWorker.mouseCoords[1],
-        10,
-        pSize,
-        gameWorker.player.id
-      )
+  }
+  if(gameWorker.mouseDown === false && gameWorker.player.charge > 0){
+    var p = gameWorker.fireProjectile();
+    gameWorker.socketEmitProjectile(p);
+  }
+  else if(gameWorker.mouseDown === true){
+    if(gameWorker.player.charge < 150) gameWorker.player.charge += 1;
+  }
+}
 
-      gameWorker.projectiles[p.id] = p;
-      gameWorker.socketEmitProjectile(p);
-      gameWorker.player.charge = 0;
-    }
-    else if(gameWorker.mouseDown === true){
-      if(gameWorker.player.charge < 150) gameWorker.player.charge += 1;
+GameWorker.prototype.fireProjectile = function(){
+  var pSize = Math.floor(gameWorker.player.charge / 6) > 5 ? Math.floor(gameWorker.player.charge / 6) : 5
+  var p = new Projectile(
+    gameWorker.player.coords.x + (gameWorker.player.width / 2),
+    gameWorker.player.coords.y + (gameWorker.player.height / 2),
+    gameWorker.mouseCoords[0],
+    gameWorker.mouseCoords[1],
+    10,
+    pSize,
+    gameWorker.player.id
+  )
+  gameWorker.player.charge = 0;
+  gameWorker.projectiles[p.id] = p;
+  return p;
+}
+
+GameWorker.prototype.moveProjectiles = function(){
+  var projectileIdToDelete;
+  for(var i in gameWorker.projectiles){
+    var projectile = gameWorker.projectiles[i];
+    var playerHit = gameWorker.detectCollision(gameWorker.player, projectile);
+    if(playerHit === true){
+      gameWorker.player.hp -= projectile.damage;
+      gameWorker.socketEmitProjectileHit(projectile);
     }
 
-    var projectileIdToDelete
-    for(var i in gameWorker.projectiles){
-      var projectile = gameWorker.projectiles[i];
-      projectile.move();
-      var playerHit = gameWorker.detectCollision(gameWorker.player, projectile);
-      if(playerHit === true){
-  			gameWorker.player.hp -= projectile.damage
-        gameWorker.socketEmitProjectileHit(projectile);
-		  }
-
-      var otherPlayerHit = false
-      for(id in gameWorker.otherPlayers){
-        if(gameWorker.detectCollision(gameWorker.otherPlayers[id], projectile) === true){
-          otherPlayerHit = true
-          break
-        }
+    var otherPlayerHit = false;
+    for(var id in gameWorker.otherPlayers){
+      if(gameWorker.detectCollision(gameWorker.otherPlayers[id], projectile) === true){
+        otherPlayerHit = true;
+        break
       }
-      if(projectile.coords.x < 0 || projectile.coords.x > gameWorker.canvasDimensions.width || projectile.coords.y < 0 || projectile.coords.y > gameWorker.canvasDimensions.height || playerHit === true || otherPlayerHit === true){
-        projectileIdToDelete = projectile.id
-      }
-    };
-    if(gameWorker.projectiles[projectileIdToDelete]){
-      delete gameWorker.projectiles[projectileIdToDelete];
     }
-    gameWorker.movePlayerWithinBounds();
-    gameWorker.socketBroadcastPosition()
-    self.postMessage({"gameData": {"playerData": gameWorker.player.playerData(), "otherPlayers": gameWorker.otherPlayerData(), "projectiles": gameWorker.projectiles}})
-  }, 15)
+    if(projectile.coords.x < 0 || projectile.coords.x > gameWorker.canvasDimensions.width || projectile.coords.y < 0 || projectile.coords.y > gameWorker.canvasDimensions.height || playerHit === true || otherPlayerHit === true){
+      projectileIdToDelete = projectile.id;
+    }
+    projectile.move();
+  };
+  if(gameWorker.projectiles[projectileIdToDelete]){
+    delete gameWorker.projectiles[projectileIdToDelete];
+  } 
 }
 
 GameWorker.prototype.movePlayerWithinBounds = function(){
@@ -113,6 +111,19 @@ GameWorker.prototype.movePlayerWithinBounds = function(){
   }
   game.player.move(game.keysDown);
 }
+
+GameWorker.prototype.run = function(){
+  var gameWorker = this;
+  setInterval(function(){
+    gameWorker.handleClientEvents();
+    gameWorker.moveProjectiles();
+    gameWorker.movePlayerWithinBounds();
+    gameWorker.socketBroadcastPosition();
+    self.postMessage({"gameData": {"playerData": gameWorker.player.playerData(), "otherPlayers": gameWorker.otherPlayerData(), "projectiles": gameWorker.projectiles}})
+  }, 15)
+}
+
+
 // Sockets
 GameWorker.prototype.socketAddPlayer = function(){
   var gameWorker = this;
@@ -195,7 +206,6 @@ GameWorker.prototype.receiveMessagesFromClient = function(){
       gameWorker.keysDown = playerEvents.keysDown
       gameWorker.mouseCoords = playerEvents.mouseCoords
       gameWorker.mouseDown = playerEvents.mouseDown
-      gameWorker.fireProjectile = playerEvents.fireProjectile
     }
     else if(e.data.firstRunData){
       var firstRunData = e.data.firstRunData

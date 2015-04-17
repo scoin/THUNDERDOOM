@@ -25,9 +25,8 @@ window.onload = function(){
 
   delete clientData.firstRunData;
 
-  var playerEvents = {"keysDown": {}, "mouseCoords": [0,0], "mouseDown": false, "fireProjectile": false};
+  var playerEvents = {"keysDown": {}, "mouseCoords": [0,0], "mouseDown": false};
 
-  playerEvents.fireProjectile = false;
   window.onkeydown = function(e){
     playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
   }
@@ -45,7 +44,6 @@ window.onload = function(){
   }
 
   window.onmouseup = function(e){
-    playerEvents.fireProjectile = true;
     playerEvents.mouseDown = false;
   }
 

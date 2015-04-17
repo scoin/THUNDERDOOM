@@ -48,7 +48,6 @@ window.onload = function(){
       playerEvents.fireProjectile = true;
       playerEvents.mouseDown = false;
     }
-    // console.log(playerEvents)
     gameWorker.postMessage({"playerEvents": playerEvents});
 
   }

@@ -34,6 +34,43 @@ PlayerWorker.prototype.move = function(keysDown){
   if("right" in keysDown) player.xDirection == 1 ? player.coords.x = player.coords.x + player.xSpeed : player.coords.x = player.coords.x + (player.xSpeed / 2);
 }
 
+PlayerWorker.prototype.setDirection = function(clientX, clientY){
+  var player = this;
+  if(clientY < player.coords.y){
+    player.yDirection = -1;
+    if(clientX >= player.coords.x - (player.width * 4) && clientX <= player.coords.x + (player.width * 4)){
+      player.imageDirection = 0;
+      player.xDirection = 0;
+    } else if(clientX > player.coords.x){
+      player.imageDirection = 1;
+      player.xDirection = 1;
+    } else if(clientX < player.coords.x){
+      player.imageDirection = 7;
+      player.xDirection = -1;
+    }
+  } else if(clientY >= (player.coords.y - player.height * 2) && clientY <= (player.coords.y + player.height * 2)){
+    player.yDirection = 0;
+    if(clientX > player.coords.x){
+      player.imageDirection = 2;
+      player.xDirection = 1;
+    } else if(clientX < player.coords.x){
+      player.imageDirection = 6;
+      player.xDirection = -1;
+    }
+  } else if(clientY > player.coords.y){
+    player.yDirection = 1;
+    if(clientX >= player.coords.x - (player.width * 4) && clientX <= player.coords.x + (player.width * 4)){
+      player.imageDirection = 4;
+      player.xDirection = 0;
+    } else if(clientX > player.coords.x){
+      player.imageDirection = 3;
+      player.xDirection = 1;
+    } else if(clientX < player.coords.x){
+      player.imageDirection = 5;
+      player.xDirection = -1;
+    }
+  }
+}
 
 var Projectile = function(startX, startY, endX, endY, speed, size, originator, id){
   this.coords = {"x": startX, "y": startY}
@@ -93,6 +130,7 @@ var GameWorker = function(){
   this.otherPlayers = {}; // this should produce bugs. it used to be an array. it should be a dict with player ids as the key
   this.projectiles = {};
   this.keysDown = {};
+  this.mouseCoords = [];
   this.mouseDown = false;
   this.fireProjectile = false;
 }
@@ -116,40 +154,43 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
 }
 
 GameWorker.prototype.run = function(){
-  var game = this;
+  var gameWorker = this;
   setInterval(function(){
-    if(game.mouseDown === true){
-      var pSize = 5 // Math.floor(game.player.charge / 6) > 5 ? Math.floor(game.player.charge / 6) :
-      var p = new Projectile(game.player.coords.x + (game.player.width / 2), game.player.coords.y + (game.player.height / 2), e.clientX, e.clientY, 10, pSize, game.player.id)
-      game.projectiles[p.id] = p;
-      game.socketEmitProjectile(p);
+    if(gameWorker.mouseCoords.length === 2){ // this is acting weird in client. array is empty until the mouse first moves, i think
+      gameWorker.player.setDirection(gameWorker.mouseCoords[0], gameWorker.mouseCoords[1])
     }
-    // game.player.chargeUp(game.mouseDown);
+    if(gameWorker.mouseDown === true){
+      // var pSize = 5 // Math.floor(gameWorker.player.charge / 6) > 5 ? Math.floor(gameWorker.player.charge / 6) :
+      // var p = new Projectile(gameWorker.player.coords.x + (gameWorker.player.width / 2), gameWorker.player.coords.y + (gameWorker.player.height / 2), e.clientX, e.clientY, 10, pSize, gameWorker.player.id)
+      // gameWorker.projectiles[p.id] = p;
+      // gameWorker.socketEmitProjectile(p);
+    }
+    // gameWorker.player.chargeUp(gameWorker.mouseDown);
     var projectileIdToDelete
-    for(var i in game.projectiles){
-      var projectile = game.projectiles[i];
+    for(var i in gameWorker.projectiles){
+      var projectile = gameWorker.projectiles[i];
       projectile.move();
-      var playerHit = game.detectCollision(game.player, projectile);
+      var playerHit = gameWorker.detectCollision(gameWorker.player, projectile);
       if(playerHit === true){
-  			game.player.hp -= projectile.damage
-        game.socketEmitProjectileHit(projectile);
+  			gameWorker.player.hp -= projectile.damage
+        gameWorker.socketEmitProjectileHit(projectile);
 		  }
 
       var otherPlayerHit = false
-      for(i in game.otherPlayers){
-        if(game.detectCollision(game.otherPlayers[i], projectile) === true){
+      for(i in gameWorker.otherPlayers){
+        if(gameWorker.detectCollision(gameWorker.otherPlayers[i], projectile) === true){
           otherPlayerHit = true
           break
         }
       }
-      if(projectile.coords.x < 0 || projectile.coords.x > game.canvas.width || projectile.coords.y < 0 || projectile.coords.y > game.canvas.height || playerHit === true || otherPlayerHit === true){
+      if(projectile.coords.x < 0 || projectile.coords.x > gameWorker.canvas.width || projectile.coords.y < 0 || projectile.coords.y > gameWorker.canvas.height || playerHit === true || otherPlayerHit === true){
         projectileIdToDelete = projectile.id
       }
     };
-    if(game.projectiles[projectileIdToDelete]){
-      delete game.projectiles[projectileIdToDelete];
+    if(gameWorker.projectiles[projectileIdToDelete]){
+      delete gameWorker.projectiles[projectileIdToDelete];
     }
-    game.movePlayerWithinBounds();
+    gameWorker.movePlayerWithinBounds();
     self.postMessage({"playerData": gameWorker.player.playerDataForClient()})
   }, 15)
 }
@@ -262,7 +303,6 @@ GameWorker.prototype.receiveMessagesFromClient = function(){
   self.onmessage = function(e){
     if(e.data.playerEvents){
       var playerEvents = e.data.playerEvents
-
       gameWorker.keysDown = playerEvents.keysDown
       gameWorker.mouseCoords = playerEvents.mouseCoords
       gameWorker.mouseDown = playerEvents.mouseDown

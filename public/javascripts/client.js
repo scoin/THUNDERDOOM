@@ -57,6 +57,8 @@ window.onload = function(){
       player.kills = playerData.kills
 
       projectiles = e.data.gameData.projectiles
+
+      otherPlayers = e.data.gameData.otherPlayers
     }
     else if(e.data.playerId){
       player.id = e.data.playerId

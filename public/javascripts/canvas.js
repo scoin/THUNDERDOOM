@@ -43,8 +43,8 @@ Canvas.prototype.drawForeground = function(player, otherPlayers, projectiles){
   var canvas = this;
   canvas.fgCtx.clearRect(0, 0, canvas.width, canvas.height);
   canvas.drawPlayer(player);
-  for(var i in otherPlayers){
-    canvas.drawPlayer(otherPlayers[i]);
+  for(var id in otherPlayers){
+    canvas.drawPlayer(otherPlayers[id]);
   };
 
   for(var id in projectiles){

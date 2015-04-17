@@ -17,6 +17,7 @@ window.onload = function(){
     var form = this;
     e.preventDefault();
     form.submit.disabled = true
+
     var player = {
       "name": form.name.value,
       "color": "blue",

@@ -1,79 +1,94 @@
-var controls = {
-  "W": "up",
-  "S": "down",
-  "A": "left",
-  "D": "right"
+var Controller = function(){
+  this.controls = {
+    "W": "up",
+    "S": "down",
+    "A": "left",
+    "D": "right"
+  };
+  this.canvas = new Canvas();
+  this.player = null;
+  this.otherPlayers = {};
+  this.projectiles = {};
+  this.clientData = {};
+  this.playerEvents = {"keysDown": {}, "mouseCoords": [0,0], "mouseDown": false};
+  this.gameWorker = null;
+}
+
+Controller.prototype.initPlayer = function(form){
+  var controller = this;
+  controller.player = {
+    "name": form.name.value,
+    "color": form.color.value,
+    "coords": {"x": Math.floor((Math.random() * (controller.canvas.width - 50))), "y": Math.floor((Math.random() * (controller.canvas.height - 50)))},
+    "imageDirection": 4
+  }
+}
+
+Controller.prototype.initWindowEvents = function(){
+  var controller = this;
+  window.onkeydown = function(e){
+    controller.playerEvents.keysDown[controller.controls[String.fromCharCode(e.which)]] = true;
+  }
+
+  window.onkeyup = function(e){
+    delete controller.playerEvents.keysDown[controller.controls[String.fromCharCode(e.which)]];
+  }
+
+  window.onmousemove = function(e){
+    controller.playerEvents.mouseCoords = [e.clientX, e.clientY];
+  }
+
+  window.onmousedown = function(e){
+    controller.playerEvents.mouseDown = true;
+  }
+
+  window.onmouseup = function(e){
+    controller.playerEvents.mouseDown = false;
+  }
+}
+
+Controller.prototype.initGameWorker = function(){
+  var controller = this;
+  controller.gameWorker = new Worker('javascripts/gameWorker.js');
 }
 
 window.onload = function(){
-  var canvas = new Canvas();
-  var otherPlayers = {};
-  var projectiles = {};
-  var clientData = {};
-
-  canvas.drawBackground();
+  var controller = new Controller()
+  controller.canvas.drawBackground();
 
   document.forms.wizardInfo.addEventListener("submit", function(e){
     var form = this;
     e.preventDefault();
     form.submit.disabled = true
+    controller.initPlayer(form)
 
-    var player = {
-      "name": form.name.value,
-      "color": form.color.value,
-      "coords": {"x": Math.floor((Math.random() * (canvas.width - 50))), "y": Math.floor((Math.random() * (canvas.height - 50)))},
-      "imageDirection": 4
-    }
+    controller.initGameWorker()
+    controller.gameWorker.postMessage({"firstRunData": {"player": controller.player, "canvas": {"width": controller.canvas.width, "height": controller.canvas.height}}});
 
-    var gameWorker = new Worker('javascripts/gameWorker.js');
-    gameWorker.postMessage({"firstRunData": {"player": player, "canvas": {"width": canvas.width, "height": canvas.height}}});
+    controller.initWindowEvents()
 
-    var playerEvents = {"keysDown": {}, "mouseCoords": [0,0], "mouseDown": false};
-
-    window.onkeydown = function(e){
-      playerEvents.keysDown[controls[String.fromCharCode(e.which)]] = true;
-    }
-
-    window.onkeyup = function(e){
-      delete playerEvents.keysDown[controls[String.fromCharCode(e.which)]];
-    }
-
-    window.onmousemove = function(e){
-      playerEvents.mouseCoords = [e.clientX, e.clientY];
-    }
-
-    window.onmousedown = function(e){
-      playerEvents.mouseDown = true;
-    }
-
-    window.onmouseup = function(e){
-      playerEvents.mouseDown = false;
-    }
-
-    gameWorker.onmessage = function(e){
+    controller.gameWorker.onmessage = function(e){
       if(e.data.gameData){
         var playerData = e.data.gameData.playerData
-        player.coords = playerData.coords
-        player.imageDirection = playerData.imageDirection
-        player.kills = playerData.kills
+        controller.player.coords = playerData.coords
+        controller.player.imageDirection = playerData.imageDirection
+        controller.player.kills = playerData.kills
 
-        projectiles = e.data.gameData.projectiles
+        controller.projectiles = e.data.gameData.projectiles
 
-        otherPlayers = e.data.gameData.otherPlayers
+        controller.otherPlayers = e.data.gameData.otherPlayers
       }
       else if(e.data.playerId){
-        player.id = e.data.playerId
+        controller.player.id = e.data.playerId
       }
     }
 
-
-  canvas.drawBackground();
-  canvas.initImages(function(){
-    window.requestAnimationFrame(function render(){
-      gameWorker.postMessage({"playerEvents": playerEvents});
-      canvas.drawForeground(player, otherPlayers, projectiles);
-      window.requestAnimationFrame(render)
-    })
-  });
+    controller.canvas.initImages(function(){
+      window.requestAnimationFrame(function render(){
+        controller.gameWorker.postMessage({"playerEvents": controller.playerEvents});
+        controller.canvas.drawForeground(controller.player, controller.otherPlayers, controller.projectiles);
+        window.requestAnimationFrame(render)
+      })
+    });
   }, false)
 }

@@ -1,6 +1,7 @@
 var sprites = {
   "blue": ["/images/bluemage/0.png", "/images/bluemage/1.png", "/images/bluemage/2.png", "/images/bluemage/3.png", "/images/bluemage/4.png", "/images/bluemage/5.png", "/images/bluemage/6.png", "/images/bluemage/7.png"],
-  "black": ["/images/blackmage/0.png", "/images/blackmage/1.png", "/images/blackmage/2.png", "/images/blackmage/3.png", "/images/blackmage/4.png", "/images/blackmage/5.png", "/images/blackmage/6.png", "/images/blackmage/7.png"]
+  "black": ["/images/blackmage/0.png", "/images/blackmage/1.png", "/images/blackmage/2.png", "/images/blackmage/3.png", "/images/blackmage/4.png", "/images/blackmage/5.png", "/images/blackmage/6.png", "/images/blackmage/7.png"],
+  "green": ["/images/greenmage/0.png", "/images/greenmage/1.png", "/images/greenmage/2.png", "/images/greenmage/3.png", "/images/greenmage/4.png", "/images/greenmage/5.png", "/images/greenmage/6.png", "/images/greenmage/7.png"]
 }
 
 var spriteImageCount = function(){

@@ -135,7 +135,8 @@ GameWorker.prototype.socketAddPlayer = function(){
   gameWorker.socket.emit('addPlayer', gameWorker.player.playerData());
 
   gameWorker.socket.on('addPlayer', function(playerData, socketId){
-    var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId);
+    console.log(playerData)
+    var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId, playerData.color);
     gameWorker.otherPlayers[socketId] = p;
   })
 }
@@ -154,7 +155,8 @@ GameWorker.prototype.socketBroadcastPosition = function() {
     "id": game.player.id,
     "xPos": game.player.coords.x,
     "yPos": game.player.coords.y,
-    "imageDir": game.player.imageDirection
+    "imageDir": game.player.imageDirection,
+    "color" : game.player.color
   })
 }
 
@@ -166,7 +168,7 @@ GameWorker.prototype.socketSyncPosition = function() {
       game.otherPlayers[socketId].coords.y = moveInfo.yPos;
       game.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
     } else {
-      var p = new PlayerWorker(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
+      var p = new PlayerWorker(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId, moveInfo.color);
       game.otherPlayers[socketId] = p;
     }
   })
@@ -214,18 +216,18 @@ GameWorker.prototype.receiveMessagesFromClient = function(){
     }
     else if(e.data.firstRunData){
       var firstRunData = e.data.firstRunData
-
+      gameWorker.player = new PlayerWorker()
       gameWorker.player.name = firstRunData.player.name
       gameWorker.player.coords = firstRunData.player.coords
       gameWorker.player.color = firstRunData.player.color
       gameWorker.canvasDimensions = firstRunData.canvas
+      gameWorker.init()
     }
   }
 }
 
 GameWorker.prototype.init = function(){
   var gameWorker = this;
-  gameWorker.player = new PlayerWorker()
 
   gameWorker.socket.on('getUserId', function(userId){
     gameWorker.player.id = userId;
@@ -235,9 +237,8 @@ GameWorker.prototype.init = function(){
   gameWorker.socketSyncPosition()
   gameWorker.socketProjectileShot()
   gameWorker.socketPopPlayers()
+  gameWorker.run()
 }
 
 var gameWorker = new GameWorker()
-gameWorker.init()
 gameWorker.receiveMessagesFromClient()
-gameWorker.run()

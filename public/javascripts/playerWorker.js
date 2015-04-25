@@ -1,4 +1,4 @@
-var PlayerWorker = function(name, x, y, id){
+var PlayerWorker = function(name, x, y, id, color){
     this.name = name;
     this.id = id;
     this.coords = {"x": x, "y": y};
@@ -12,7 +12,7 @@ var PlayerWorker = function(name, x, y, id){
     this.charge = 0;
     this.hp = 10;
     this.kills = 0;
-    this.color = "blue";
+    this.color = color;
 }
 
 PlayerWorker.prototype.playerData = function(){

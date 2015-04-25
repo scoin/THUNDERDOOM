@@ -39,7 +39,7 @@ PlayerWorker.prototype.setDirection = function(clientX, clientY){
   var player = this;
   if(clientY < player.coords.y){
     player.yDirection = -1;
-    if(clientX >= player.coords.x - (player.width * 4) && clientX <= player.coords.x + (player.width * 4)){
+    if(clientX >= player.coords.x - player.width && clientX <= player.coords.x + player.width){
       player.imageDirection = 0;
       player.xDirection = 0;
     } else if(clientX > player.coords.x){
@@ -49,7 +49,7 @@ PlayerWorker.prototype.setDirection = function(clientX, clientY){
       player.imageDirection = 7;
       player.xDirection = -1;
     }
-  } else if(clientY >= (player.coords.y - player.height * 2) && clientY <= (player.coords.y + player.height * 2)){
+  } else if(clientY >= (player.coords.y - player.height) && clientY <= (player.coords.y + player.height)){
     player.yDirection = 0;
     if(clientX > player.coords.x){
       player.imageDirection = 2;
@@ -60,7 +60,7 @@ PlayerWorker.prototype.setDirection = function(clientX, clientY){
     }
   } else if(clientY > player.coords.y){
     player.yDirection = 1;
-    if(clientX >= player.coords.x - (player.width * 4) && clientX <= player.coords.x + (player.width * 4)){
+    if(clientX >= player.coords.x - player.width && clientX <= player.coords.x + player.width){
       player.imageDirection = 4;
       player.xDirection = 0;
     } else if(clientX > player.coords.x){

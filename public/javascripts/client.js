@@ -17,6 +17,7 @@ window.onload = function(){
     var form = this;
     e.preventDefault();
     form.submit.disabled = true
+    form.style.visibility = "hidden";
 
     var player = {
       "name": form.name.value,

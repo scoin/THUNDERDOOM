@@ -119,7 +119,8 @@ GameWorker.prototype.run = function(){
   setInterval(function(){
     gameWorker.moveProjectiles();
     if(gameWorker.player.isDead() === true){
-
+      gameWorker.player.imageDirection = 8
+      gameWorker.socketBroadcastPosition();
     }
     else{
       gameWorker.handleClientEvents();
@@ -137,7 +138,6 @@ GameWorker.prototype.socketAddPlayer = function(){
   gameWorker.socket.emit('addPlayer', gameWorker.player.playerData());
 
   gameWorker.socket.on('addPlayer', function(playerData, socketId){
-    console.log(playerData)
     var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId, playerData.color);
     gameWorker.otherPlayers[socketId] = p;
   })

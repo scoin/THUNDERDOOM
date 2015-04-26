@@ -23,7 +23,6 @@ GameWorker.prototype.otherPlayerData = function(){
 }
 
 GameWorker.prototype.detectCollision = function(objOne, objTwo){
-    var player = this;
 		if(objOne.id === objTwo.originator) {
 			return false
 		}
@@ -40,6 +39,7 @@ GameWorker.prototype.detectCollision = function(objOne, objTwo){
 }
 
 GameWorker.prototype.handleClientEvents = function(){
+  var gameWorker = this;
   if(gameWorker.mouseCoords.length === 2){
       gameWorker.player.setDirection(gameWorker.mouseCoords[0], gameWorker.mouseCoords[1])
   }
@@ -53,6 +53,7 @@ GameWorker.prototype.handleClientEvents = function(){
 }
 
 GameWorker.prototype.fireProjectile = function(){
+  var gameWorker = this;
   var pSize = Math.floor(gameWorker.player.charge / 6) > 5 ? Math.floor(gameWorker.player.charge / 6) : 5
   var p = new Projectile(
     gameWorker.player.coords.x + (gameWorker.player.width / 2),
@@ -69,6 +70,7 @@ GameWorker.prototype.fireProjectile = function(){
 }
 
 GameWorker.prototype.moveProjectiles = function(){
+  var gameWorker = this;
   var projectileIdToDelete;
   for(var i in gameWorker.projectiles){
     var projectile = gameWorker.projectiles[i];
@@ -96,20 +98,20 @@ GameWorker.prototype.moveProjectiles = function(){
 }
 
 GameWorker.prototype.movePlayerWithinBounds = function(){
-  var game = this;
-  if(game.player.coords.x <= 0){
-    delete game.keysDown['left'];
+  var gameWorker = this;
+  if(gameWorker.player.coords.x <= 0){
+    delete gameWorker.keysDown['left'];
   }
-  if(game.player.coords.x + game.player.width >= game.canvasDimensions.width){
-    delete game.keysDown['right'];
+  if(gameWorker.player.coords.x + gameWorker.player.width >= gameWorker.canvasDimensions.width){
+    delete gameWorker.keysDown['right'];
   }
-  if(game.player.coords.y <= 0){
-    delete game.keysDown['up'];
+  if(gameWorker.player.coords.y <= 0){
+    delete gameWorker.keysDown['up'];
   }
-  if(game.player.coords.y + game.player.height >= game.canvasDimensions.height){
-    delete game.keysDown['down'];
+  if(gameWorker.player.coords.y + gameWorker.player.height >= gameWorker.canvasDimensions.height){
+    delete gameWorker.keysDown['down'];
   }
-  game.player.move(game.keysDown);
+  gameWorker.player.move(gameWorker.keysDown);
 }
 
 GameWorker.prototype.run = function(){
@@ -117,7 +119,8 @@ GameWorker.prototype.run = function(){
   setInterval(function(){
     gameWorker.moveProjectiles();
     if(gameWorker.player.isDead() === true){
-
+      gameWorker.player.imageDirection = 8
+      gameWorker.socketBroadcastPosition();
     }
     else{
       gameWorker.handleClientEvents();
@@ -135,7 +138,7 @@ GameWorker.prototype.socketAddPlayer = function(){
   gameWorker.socket.emit('addPlayer', gameWorker.player.playerData());
 
   gameWorker.socket.on('addPlayer', function(playerData, socketId){
-    var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId);
+    var p = new PlayerWorker(playerData.name, playerData.coords.x, playerData.coords.y, socketId, playerData.color);
     gameWorker.otherPlayers[socketId] = p;
   })
 }
@@ -148,26 +151,27 @@ GameWorker.prototype.socketPopPlayers = function(){
 }
 
 GameWorker.prototype.socketBroadcastPosition = function() {
-  var game = this;
-  game.socket.emit('playerPosition', {
-    "name": game.player.name,
-    "id": game.player.id,
-    "xPos": game.player.coords.x,
-    "yPos": game.player.coords.y,
-    "imageDir": game.player.imageDirection
+  var gameWorker = this;
+  gameWorker.socket.emit('playerPosition', {
+    "name": gameWorker.player.name,
+    "id": gameWorker.player.id,
+    "xPos": gameWorker.player.coords.x,
+    "yPos": gameWorker.player.coords.y,
+    "imageDir": gameWorker.player.imageDirection,
+    "color" : gameWorker.player.color
   })
 }
 
 GameWorker.prototype.socketSyncPosition = function() {
-  var game = this;
-  game.socket.on('playerPosition', function(moveInfo, socketId) {
-    if(game.otherPlayers[socketId]){
-      game.otherPlayers[socketId].coords.x = moveInfo.xPos;
-      game.otherPlayers[socketId].coords.y = moveInfo.yPos;
-      game.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
+  var gameWorker = this;
+  gameWorker.socket.on('playerPosition', function(moveInfo, socketId) {
+    if(gameWorker.otherPlayers[socketId]){
+      gameWorker.otherPlayers[socketId].coords.x = moveInfo.xPos;
+      gameWorker.otherPlayers[socketId].coords.y = moveInfo.yPos;
+      gameWorker.otherPlayers[socketId].imageDirection = moveInfo.imageDir;
     } else {
-      var p = new PlayerWorker(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId);
-      game.otherPlayers[socketId] = p;
+      var p = new PlayerWorker(moveInfo.name, moveInfo.xPos, moveInfo.yPos, socketId, moveInfo.color);
+      gameWorker.otherPlayers[socketId] = p;
     }
   })
 }
@@ -186,19 +190,19 @@ GameWorker.prototype.socketProjectileShot = function() {
 }
 
 GameWorker.prototype.socketEmitProjectileHit = function(projectile){
-  var game = this;
-  game.socket.emit('projectileHit', {
-    "player": game.player.playerData(),
+  var gameWorker = this;
+  gameWorker.socket.emit('projectileHit', {
+    "player": gameWorker.player.playerData(),
     "projectile": projectile.projectileData()
   })
 }
 
 GameWorker.prototype.socketGetProjectileHits = function(){
-  var game = this;
-  game.socket.on('projectileHit', function(hitData){
+  var gameWorker = this;
+  gameWorker.socket.on('projectileHit', function(hitData){
     var hitPlayer = hitData.player;
     var projectile = hitData.projectile;
-    delete game.projectiles[projectile.id]
+    delete gameWorker.projectiles[projectile.id]
   })
 }
 
@@ -214,18 +218,18 @@ GameWorker.prototype.receiveMessagesFromClient = function(){
     }
     else if(e.data.firstRunData){
       var firstRunData = e.data.firstRunData
-
+      gameWorker.player = new PlayerWorker()
       gameWorker.player.name = firstRunData.player.name
       gameWorker.player.coords = firstRunData.player.coords
       gameWorker.player.color = firstRunData.player.color
       gameWorker.canvasDimensions = firstRunData.canvas
+      gameWorker.init()
     }
   }
 }
 
 GameWorker.prototype.init = function(){
   var gameWorker = this;
-  gameWorker.player = new PlayerWorker()
 
   gameWorker.socket.on('getUserId', function(userId){
     gameWorker.player.id = userId;
@@ -235,9 +239,8 @@ GameWorker.prototype.init = function(){
   gameWorker.socketSyncPosition()
   gameWorker.socketProjectileShot()
   gameWorker.socketPopPlayers()
+  gameWorker.run()
 }
 
 var gameWorker = new GameWorker()
-gameWorker.init()
 gameWorker.receiveMessagesFromClient()
-gameWorker.run()
